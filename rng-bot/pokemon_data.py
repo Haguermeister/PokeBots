@@ -1,15 +1,13 @@
-"""Pokemon data for FRLG starters and IV/stat calculation.
+"""Pokemon data for FRLG starters, game corner, and static encounters.
 
-Contains base stats, level-up data, and stat formulas for Gen 3.
-Also includes IV reverse calculation from observed stats.
+Contains base stats, stat formulas for Gen 3, and IV reverse calculation.
 """
 
 from __future__ import annotations
 
 import rng_engine
 
-# FRLG starter base stats: [HP, Atk, Def, Spe, SpA, SpD]
-# Order matches Gen 3 internal stat order
+# FRLG starter base stats
 STARTERS = {
     "Bulbasaur": {
         "dex": 1,
@@ -38,6 +36,131 @@ STARTERS = {
         "ability_1": "Torrent",
         "level": 5,
     },
+}
+
+# FireRed Game Corner prizes (Celadon Game Corner)
+GAME_CORNER_FR = {
+    "Abra": {
+        "dex": 63,
+        "types": ["Psychic"],
+        "base": {"hp": 25, "atk": 20, "def": 15, "spe": 90, "spa": 105, "spd": 55},
+        "gender_ratio": "3:1",
+        "ability_0": "Synchronize",
+        "ability_1": "Inner Focus",
+        "level": 9,
+    },
+    "Clefairy": {
+        "dex": 35,
+        "types": ["Normal"],
+        "base": {"hp": 70, "atk": 45, "def": 48, "spe": 35, "spa": 60, "spd": 65},
+        "gender_ratio": "1:3",
+        "ability_0": "Cute Charm",
+        "ability_1": "Cute Charm",
+        "level": 8,
+    },
+    "Scyther": {
+        "dex": 123,
+        "types": ["Bug", "Flying"],
+        "base": {"hp": 70, "atk": 110, "def": 80, "spe": 105, "spa": 55, "spd": 80},
+        "gender_ratio": "1:1",
+        "ability_0": "Swarm",
+        "ability_1": "Swarm",
+        "level": 25,
+    },
+    "Dratini": {
+        "dex": 147,
+        "types": ["Dragon"],
+        "base": {"hp": 41, "atk": 64, "def": 45, "spe": 50, "spa": 50, "spd": 50},
+        "gender_ratio": "1:1",
+        "ability_0": "Shed Skin",
+        "ability_1": "Shed Skin",
+        "level": 18,
+    },
+    "Porygon": {
+        "dex": 137,
+        "types": ["Normal"],
+        "base": {"hp": 65, "atk": 60, "def": 70, "spe": 40, "spa": 85, "spd": 75},
+        "gender_ratio": "genderless",
+        "ability_0": "Trace",
+        "ability_1": "Trace",
+        "level": 26,
+    },
+}
+
+# LeafGreen Game Corner prizes
+GAME_CORNER_LG = {
+    "Abra": GAME_CORNER_FR["Abra"],
+    "Clefairy": GAME_CORNER_FR["Clefairy"],
+    "Pinsir": {
+        "dex": 127,
+        "types": ["Bug"],
+        "base": {"hp": 65, "atk": 125, "def": 100, "spe": 85, "spa": 55, "spd": 70},
+        "gender_ratio": "1:1",
+        "ability_0": "Hyper Cutter",
+        "ability_1": "Hyper Cutter",
+        "level": 25,
+    },
+    "Dratini": GAME_CORNER_FR["Dratini"],
+    "Porygon": GAME_CORNER_FR["Porygon"],
+}
+
+# Other gift/static Pokemon (Static 1 method)
+STATIC_POKEMON = {
+    "Eevee": {
+        "dex": 133,
+        "types": ["Normal"],
+        "base": {"hp": 55, "atk": 55, "def": 50, "spe": 55, "spa": 45, "spd": 65},
+        "gender_ratio": "7:1",
+        "ability_0": "Run Away",
+        "ability_1": "Run Away",
+        "level": 25,
+    },
+    "Hitmonlee": {
+        "dex": 106,
+        "types": ["Fighting"],
+        "base": {"hp": 50, "atk": 120, "def": 53, "spe": 87, "spa": 35, "spd": 110},
+        "gender_ratio": "male_only",
+        "ability_0": "Limber",
+        "ability_1": "Limber",
+        "level": 25,
+    },
+    "Hitmonchan": {
+        "dex": 107,
+        "types": ["Fighting"],
+        "base": {"hp": 50, "atk": 105, "def": 79, "spe": 76, "spa": 35, "spd": 110},
+        "gender_ratio": "male_only",
+        "ability_0": "Keen Eye",
+        "ability_1": "Keen Eye",
+        "level": 25,
+    },
+    "Lapras": {
+        "dex": 131,
+        "types": ["Water", "Ice"],
+        "base": {"hp": 130, "atk": 85, "def": 80, "spe": 60, "spa": 85, "spd": 95},
+        "gender_ratio": "1:1",
+        "ability_0": "Water Absorb",
+        "ability_1": "Shell Armor",
+        "level": 25,
+    },
+    "Togepi": {
+        "dex": 175,
+        "types": ["Normal"],
+        "base": {"hp": 35, "atk": 20, "def": 65, "spe": 20, "spa": 40, "spd": 65},
+        "gender_ratio": "7:1",
+        "ability_0": "Hustle",
+        "ability_1": "Serene Grace",
+        "level": 5,
+    },
+}
+
+# Combined lookup for all Pokemon (starters + game corner + static)
+ALL_POKEMON = {**STARTERS, **GAME_CORNER_FR, **GAME_CORNER_LG, **STATIC_POKEMON}
+
+# Encounter type categories for the UI
+ENCOUNTER_CATEGORIES = {
+    "starters": list(STARTERS.keys()),
+    "game_corner": list({**GAME_CORNER_FR, **GAME_CORNER_LG}.keys()),
+    "static": list(STATIC_POKEMON.keys()),
 }
 
 # Pokemon that appear in early-game battles (for EV tracking during calibration)
@@ -87,16 +210,16 @@ def calc_all_stats(
     """Calculate all stats for a Pokemon.
 
     Args:
-        pokemon_name: Key in STARTERS dict
+        pokemon_name: Key in ALL_POKEMON dict
         ivs: Dict with hp, atk, def, spe, spa, spd
-        level: Override level (default: starter level)
+        level: Override level (default from data)
         evs: Dict with stat EVs (default: all 0)
         nature_id: Nature index 0-24
 
     Returns:
         Dict with all calculated stats
     """
-    data = STARTERS[pokemon_name]
+    data = ALL_POKEMON[pokemon_name]
     base = data["base"]
     if level is None:
         level = data["level"]
@@ -133,7 +256,7 @@ def reverse_calc_ivs(
 
     Returns dict mapping stat name to list of possible IV values (0-31).
     """
-    data = STARTERS[pokemon_name]
+    data = ALL_POKEMON[pokemon_name]
     base = data["base"]
     if level is None:
         level = data["level"]
@@ -167,12 +290,8 @@ def reverse_calc_ivs(
 
 
 def pokemon_summary(pkmn: dict, pokemon_name: str) -> dict:
-    """Create a full summary for a generated Pokemon, including stats.
-
-    Takes output from rng_engine.method1_pokemon() and adds computed stats,
-    gender, ability name, hidden power, etc.
-    """
-    data = STARTERS[pokemon_name]
+    """Create a full summary for a generated Pokemon, including stats."""
+    data = ALL_POKEMON[pokemon_name]
     ivs = pkmn["ivs"]
     stats = calc_all_stats(pokemon_name, ivs, nature_id=pkmn["nature_id"])
     gender = rng_engine.gender_from_pid(pkmn["pid"], data["gender_ratio"])
@@ -193,7 +312,7 @@ def pokemon_summary(pkmn: dict, pokemon_name: str) -> dict:
     }
 
 
-def generate_starter_spread(
+def generate_pokemon_spread(
     initial_seed: int,
     tid: int,
     sid: int,
@@ -203,8 +322,12 @@ def generate_starter_spread(
     *,
     shiny_only: bool = False,
 ) -> list[dict]:
-    """Generate full Pokemon summaries for a starter across an advance range."""
+    """Generate full Pokemon summaries across an advance range."""
     raw = rng_engine.generate_range(
         initial_seed, tid, sid, min_advance, max_advance, shiny_only=shiny_only,
     )
     return [pokemon_summary(p, pokemon_name) for p in raw]
+
+
+# Keep old name for compatibility
+generate_starter_spread = generate_pokemon_spread

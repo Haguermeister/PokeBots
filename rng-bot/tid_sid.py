@@ -45,16 +45,61 @@ def gba_to_cap(gba_x: int, gba_y: int, cap_w: int = 1280, cap_h: int = 720) -> t
 
 def find_sids_for_tid(
     tid: int,
-    min_advance: int = 1000,
-    max_advance: int = 100000,
+    custom_rival_name: bool = True,
+    target_advance: int = 1500,
+    english_offset: int = 249,
+    search_range: int = 40,
 ) -> list[dict]:
-    """Find possible SIDs for a given TID by searching LCRNG from seed 0.
+    """Find possible SIDs using Lincoln's tool method.
 
-    In FRLG, the LCRNG is initialized to 0 at boot. TID = high16(state)
-    at the RNG call where the trainer ID is generated. SID = high16 of
-    the next call.
+    Uses TID hex value as the LCRNG initial seed and searches around
+    the expected TID generation advance. From Blissey's tutorial:
+      actual_advance = (target_advance + english_offset) * 2
+      e.g. (1500 + 249) * 2 = 3498
 
-    Returns list of {advance, tid, sid} sorted by advance (most likely first).
+    With custom rival name, only even advances are valid.
+    With preset rival name, only odd advances are valid.
+
+    Returns list of {advance, tid, sid} sorted by distance from center.
+    """
+    center = (target_advance + english_offset) * 2
+    min_adv = max(0, center - search_range * 2)
+    max_adv = center + search_range * 2
+
+    # Use TID as the initial 32-bit seed (Lincoln's tool approach)
+    initial_seed = tid  # 0x0000C169 for TID=49513
+
+    results = []
+    for adv in range(min_adv, max_adv + 1):
+        # Custom rival name = even advances, preset = odd advances
+        if custom_rival_name and adv % 2 != 0:
+            continue
+        if not custom_rival_name and adv % 2 != 1:
+            continue
+
+        state = rng_engine.advance_n(initial_seed, adv)
+        sid = rng_engine.high16(state)
+        results.append({
+            "advance": adv,
+            "tid": tid,
+            "sid": sid,
+        })
+
+    # Sort by distance from center advance (most likely first)
+    results.sort(key=lambda r: abs(r["advance"] - center))
+    return results
+
+
+def find_sids_bruteforce(
+    tid: int,
+    min_advance: int = 1000,
+    max_advance: int = 500000,
+) -> list[dict]:
+    """Find SIDs by brute-force searching LCRNG from seed 0.
+
+    Slower but useful as a fallback. Searches for all advances where
+    high16(state) == TID. This finds where the TID would appear in the
+    raw LCRNG sequence from seed 0.
     """
     results = []
     seed = rng_engine.advance_n(0, min_advance)
@@ -67,8 +112,6 @@ def find_sids_for_tid(
                 "sid": sid,
             })
         seed = rng_engine.advance(seed)
-
-    # Sort by advance — lower advances are more likely (faster menu navigation)
     results.sort(key=lambda r: r["advance"])
     return results
 

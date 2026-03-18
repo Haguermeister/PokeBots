@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Button sequence for one shiny hunt attempt (UART version)."""
+"""Button sequence for one shiny hunt attempt (HTTP/WiFi version)."""
 import random
 import time
 import pico
@@ -33,29 +33,27 @@ def run():
     start = time.time()
     print("Starting sequence...")
 
-    pico.send_reset()
+    pico.send_cmd("reset")
     time.sleep(RESET_TIME)
 
     # Title screen — rand wait on Charizard, hold A through it
-    rand_wait(0.001, 2)
     repeat_press("A", 0.4, 2)
     rand_wait(0.17, 2)
     hold_button("A", 1800)
     time.sleep(0.6)
 
     # Load save + pick pokemon
-    rand_wait(0.001, 3)
     press("A", 1.2)
-    repeat_press("A", 0.2, 32)
+    repeat_press("A", 0.2, 30)
     press("A", 0.9)
 
     # "This pokemon is energetic" — rand wait, then decline rename + rival picks
     rand_wait(0.17, 2)
-    repeat_press("B", 0.2, 44)
-    time.sleep(2.6)
+    repeat_press("B", 0.2, 40)
+    time.sleep(2.3)
 
     # Open menu + navigate to summary
-    press("Y", 1.2)
+    press("X", 1.2)
     repeat_press("A", 0.3, 7)
     time.sleep(0.5)
 
@@ -66,5 +64,4 @@ def run():
 
 
 if __name__ == "__main__":
-    pico.connect()
     raise SystemExit(run())

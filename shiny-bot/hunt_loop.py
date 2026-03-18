@@ -9,9 +9,9 @@ import threading
 import subprocess
 from pathlib import Path
 import pico
+import run_sequence
 
 BASE_DIR = Path(__file__).resolve().parent
-SHELL_SCRIPT = BASE_DIR / "run_sequence.sh"
 STAR_SCRIPT = BASE_DIR / "check_border.py"
 STATE_FILE = BASE_DIR / "hunt_state.json"
 ENCOUNTER_FILE = BASE_DIR / "encounter_count.txt"
@@ -192,16 +192,6 @@ def time_updater(previous_runtime, start_time, attempt_tracker, recovery_tracker
         time.sleep(0.5)
 
 
-def run_shell_script():
-    print(f"\nRunning run_sequence.sh ...")
-    result = subprocess.run(
-        ["/bin/zsh", str(SHELL_SCRIPT)],
-        cwd=BASE_DIR,
-        stderr=subprocess.DEVNULL,
-    )
-    return result.returncode
-
-
 def _run_check(*args):
     """Run check_border.py with given args, suppressing macOS AVCapture warnings."""
     result = subprocess.run(
@@ -258,9 +248,9 @@ def main():
             print(f"Attempt #{attempt}")
             print("=" * 50)
 
-            shell_rc = run_shell_script()
-            if shell_rc != 0:
-                print(f"run_sequence.sh failed with code {shell_rc} — soft resetting...")
+            rc = run_sequence.run()
+            if rc != 0:
+                print(f"run_sequence failed with code {rc} — soft resetting...")
                 pico.send_cmd("reset")
                 time.sleep(3.5)
                 continue

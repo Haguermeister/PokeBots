@@ -1,8 +1,9 @@
 """Shared Pico W communication module."""
+import os
 import socket
 
-PICO_HOST = "YOUR_PICO_IP"
-PICO_PORT = 8080
+PICO_HOST = os.environ.get("PICO_IP", "YOUR_PICO_IP")
+PICO_PORT = int(os.environ.get("PICO_PORT", "8080"))
 
 
 def post(path: str, body: str = "") -> str:

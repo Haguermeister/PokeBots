@@ -16,6 +16,7 @@ Features:
 
 import http.server
 import json
+import os
 import threading
 import subprocess
 import signal
@@ -33,22 +34,29 @@ PORT = 5001
 BASE_DIR = Path(__file__).resolve().parent
 VENV_PYTHON = BASE_DIR / "venv" / "bin" / "python3"
 
+# Trainer IDs — set via env vars or web UI
+DEFAULT_TID = int(os.environ.get("TID", "0"))
+DEFAULT_SID = int(os.environ.get("SID", "0"))
+
 # ── State ────────────────────────────────────────────────────────────────────
 STATE_FILE = BASE_DIR / "rng_state.json"
 
 DEFAULT_STATE = {
-    "tid": 0,
-    "sid": 0,
-    "tid_set": False,
+    "tid": DEFAULT_TID,
+    "sid": DEFAULT_SID,
+    "tid_set": DEFAULT_TID != 0,
     "selected_seed": None,          # hex string
     "selected_seed_frame": None,
     "selected_advance": None,
-    "selected_pokemon": "Bulbasaur",
+    "selected_pokemon": "Scyther",
     "target_pokemon": None,         # full pokemon dict when target is locked
     "min_advance": 1000,
-    "max_advance": 100000,
+    "max_advance": 5000,
     "calibration_offset_ms": 0.0,
     "timer_offset_ms": 0.0,        # NX = 0, NX2 = -750
+    "encounter_type": "game_corner",  # starter, game_corner, static
+    "has_pokedex": True,
+    "custom_rival_name": True,
     "attempts": 0,
     "last_result": None,
 }
@@ -232,6 +240,10 @@ def handle_api(endpoint: str, data: dict) -> dict:
             return api_auto_detect_tid()
         elif endpoint == "compute_sid":
             return api_compute_sid(data)
+        elif endpoint == "set_encounter":
+            return api_set_encounter(data)
+        elif endpoint == "get_pokemon_list":
+            return api_get_pokemon_list()
         else:
             return {"error": f"Unknown endpoint: {endpoint}"}
 
@@ -254,21 +266,31 @@ def api_status() -> dict:
 def api_set_tid(data: dict) -> dict:
     tid = int(data.get("tid", 0)) & 0xFFFF
     sid = int(data.get("sid", 0)) & 0xFFFF
+    sid_confirmed = data.get("sid_confirmed", False)
     state["tid"] = tid
     state["sid"] = sid
     state["tid_set"] = True
+    state["sid_confirmed"] = bool(sid_confirmed)
     save_state()
     start_shiny_count_bg()
-    return {"msg": f"TID={tid} SID={sid} saved"}
+    confirmed_str = " (confirmed)" if sid_confirmed else " (unconfirmed)"
+    return {"msg": f"TID={tid} SID={sid}{confirmed_str} saved"}
 
 
 def api_set_pokemon(data: dict) -> dict:
-    name = data.get("pokemon", "Bulbasaur")
-    if name in pokemon_data.STARTERS:
+    name = data.get("pokemon", "Scyther")
+    if name in pokemon_data.ALL_POKEMON:
         state["selected_pokemon"] = name
+        # Auto-detect encounter type
+        if name in pokemon_data.STARTERS:
+            state["encounter_type"] = "starter"
+        elif name in pokemon_data.GAME_CORNER_FR or name in pokemon_data.GAME_CORNER_LG:
+            state["encounter_type"] = "game_corner"
+        else:
+            state["encounter_type"] = "static"
         save_state()
-        return {"msg": f"Pokemon set to {name}"}
-    return {"error": "Invalid pokemon name"}
+        return {"msg": f"Pokemon set to {name} (encounter: {state['encounter_type']})"}
+    return {"error": f"Invalid pokemon name: {name}"}
 
 
 def api_set_range(data: dict) -> dict:
@@ -341,7 +363,7 @@ def api_get_shinies(data: dict) -> dict:
         return {"error": f"Seed {seed_hex} not found", "shinies": []}
 
     pokemon_name = data.get("pokemon", state["selected_pokemon"])
-    if pokemon_name not in pokemon_data.STARTERS:
+    if pokemon_name not in pokemon_data.ALL_POKEMON:
         pokemon_name = state["selected_pokemon"]
 
     tid, sid = state["tid"], state["sid"]
@@ -565,9 +587,10 @@ def api_auto_detect_tid() -> dict:
 
 
 def api_compute_sid(data: dict) -> dict:
-    """Compute SID candidates from a manually-entered TID."""
+    """Compute SID candidates using Lincoln's tool method."""
     tid = int(data.get("tid", 0)) & 0xFFFF
-    candidates = tid_sid.find_sids_for_tid(tid)
+    custom_name = data.get("custom_rival_name", state.get("custom_rival_name", True))
+    candidates = tid_sid.find_sids_for_tid(tid, custom_rival_name=custom_name)
 
     if not candidates:
         return {"error": "No SID candidates found", "tid": tid, "candidates": []}
@@ -577,6 +600,7 @@ def api_compute_sid(data: dict) -> dict:
     state["sid"] = candidates[0]["sid"]
     state["tid_set"] = True
     state["sid_candidates"] = candidates
+    state["custom_rival_name"] = custom_name
     save_state()
     start_shiny_count_bg()
 
@@ -585,6 +609,28 @@ def api_compute_sid(data: dict) -> dict:
         "sid": candidates[0]["sid"],
         "candidates": candidates,
         "msg": f"TID={tid}, found {len(candidates)} SID candidate(s). Using SID={candidates[0]['sid']}.",
+    }
+
+
+def api_set_encounter(data: dict) -> dict:
+    """Set encounter type and related settings."""
+    enc_type = data.get("encounter_type", "game_corner")
+    if enc_type in ("starter", "game_corner", "static"):
+        state["encounter_type"] = enc_type
+    if "has_pokedex" in data:
+        state["has_pokedex"] = bool(data["has_pokedex"])
+    if "custom_rival_name" in data:
+        state["custom_rival_name"] = bool(data["custom_rival_name"])
+    save_state()
+    return {"msg": f"Encounter type: {enc_type}"}
+
+
+def api_get_pokemon_list() -> dict:
+    """Get all available Pokemon grouped by category."""
+    return {
+        "starters": list(pokemon_data.STARTERS.keys()),
+        "game_corner": list({**pokemon_data.GAME_CORNER_FR, **pokemon_data.GAME_CORNER_LG}.keys()),
+        "static": list(pokemon_data.STATIC_POKEMON.keys()),
     }
 
 

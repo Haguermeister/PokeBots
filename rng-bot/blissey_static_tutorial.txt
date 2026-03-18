@@ -1,0 +1,69 @@
+YoggTwo's Static RNG Tutorial - FireRed/LeafGreen Switch
+=========================================================
+Source: https://www.youtube.com/watch?v=uamRpViUzwQ
+
+SETUP:
+- Park character at the Pokemon you want (Game Corner recommended)
+- Settings: Mono, Help, Text Speed Fast
+- Open party space
+- Save game
+
+10 LINES SETUP:
+- Switch Mono Help, None, Switch 2
+- Target seed: C934
+- Seed ±50
+- Min advances: 1000-2000 (early shiny frame)
+- Required overworld frames: 500
+- Your TID and SID
+- Static 1, Game Corner, Scyther
+- Search for shiny star or square
+
+PICKING A TARGET:
+- Pick one with 400-500+ continue screen frames
+- Don't care about stats/nature for first attempts
+- Example: Seed 834C, intro timer 31563ms, advances 1486
+- Continue screen advances = 486
+- Target: Lax male Scyther
+
+EONTIMER SETUP:
+- Custom console, 3 timers
+- GBA refresh interval 8, minimum length 14
+- Timer 1 (intro): 31563ms (seed timing)
+- Timer 2 (continue): 486 (continue screen advances at 1x speed)
+- Timer 3 (overworld): 574 (overworld frames at 2x speed)
+
+ATTEMPT PROCESS:
+1. Home buffer: open game, click profile, immediately press HOME
+2. Start timer + press A at exact same time to resume
+3. Watch ENTIRE intro every time (no buttons!)
+4. Press A + hold at title screen on final beep (6th beep)
+5. Release A on file select, press A on next beep (6th beep)
+6. Get to YES box, press A on final beep (6th beep)
+7. Check Pokemon stats in 10 Lines
+
+CALIBRATION:
+1. Input nature + stats into 10 Lines calculator
+2. Check which seed + advance you hit
+3. If seed is early (minus): need to add ms to intro timer
+4. If seed is late (plus): need to subtract ms
+5. Type the hit seed's intro timer value into EonTimer "hit" field
+6. Hit "update" to auto-calibrate
+
+CAVEMAN MICRO ADJUSTMENTS:
+- When flip-flopping between early/late on seed
+- Don't use hit/calibrate fields
+- Manually add/subtract small amounts (5-7ms) to intro timer target ms
+- Add when early, subtract when late
+- "Feel the button presses" — don't over-calibrate from inconsistent presses
+
+ADVANCE CALIBRATION:
+- Only calibrate advances once you're on your target seed
+- Input the advance you hit, update timer
+- In overworld, advances move by 2 (2x speed)
+- So being 2 off in advances = 1 singular advance off
+
+KEY QUOTES:
+- "Just follow me. Just follow me here."
+- "We're not going for good IVs or good nature. We're just going for a shiny."
+- "You really do got to feel the button presses."
+- "If you don't feel the button presses and you start calibrating around attempts that were off... it really can cause a lot of frustration."

@@ -416,17 +416,29 @@ def test_all_starters_have_data():
         test(f"{name} has level", data["level"] == 5)
         test(f"{name} has ability_0", "ability_0" in data)
 
+    # Test game corner Pokemon
+    for name in ["Scyther", "Porygon", "Dratini", "Abra", "Clefairy"]:
+        data = pokemon_data.ALL_POKEMON[name]
+        test(f"{name} has base stats", "base" in data)
+        test(f"{name} has 6 base stats", len(data["base"]) == 6)
+        test(f"{name} in ALL_POKEMON", name in pokemon_data.ALL_POKEMON)
+
+    # Test static Pokemon
+    for name in ["Eevee", "Lapras"]:
+        data = pokemon_data.ALL_POKEMON[name]
+        test(f"{name} has base stats", "base" in data)
+        test(f"{name} in ALL_POKEMON", name in pokemon_data.ALL_POKEMON)
+
 
 # ── TID/SID Calculation ────────────────────────────────────────────────────
 
 def test_find_sids_for_tid():
     print("Testing find_sids_for_tid...")
 
-    # Basic: search should return list of dicts with correct keys
-    results = tid_sid.find_sids_for_tid(0, min_advance=1000, max_advance=5000)
+    # Lincoln's method: uses TID as initial seed, searches around advance 3498
+    results = tid_sid.find_sids_for_tid(0, custom_rival_name=True)
     test("returns list", isinstance(results, list))
-    # TID 0 should appear somewhere in 1000-5000 advances from seed 0
-    # (LCRNG from 0 will hit high16==0 at some point)
+    test("has candidates", len(results) > 0)
     if results:
         r = results[0]
         test("result has advance", "advance" in r)
@@ -434,36 +446,40 @@ def test_find_sids_for_tid():
         test("result has sid", "sid" in r)
         test_eq("result tid matches", r["tid"], 0)
         test("sid is 16-bit", 0 <= r["sid"] <= 65535)
-        test("advance in range", 1000 <= r["advance"] <= 5000)
 
-    # Results should be sorted by advance
+    # Results should be sorted by distance from center
+    center = (1500 + 249) * 2
     for i in range(1, len(results)):
-        test(f"sorted by advance [{i}]", results[i]["advance"] >= results[i-1]["advance"])
+        test(f"sorted by distance [{i}]",
+             abs(results[i]["advance"] - center) >= abs(results[i-1]["advance"] - center))
 
-    # Verify SID computation manually for each result
-    for r in results:
-        state = rng_engine.advance_n(0, r["advance"])
-        test_eq(f"TID at advance {r['advance']}", rng_engine.high16(state), 0)
-        expected_sid = rng_engine.high16(rng_engine.advance(state))
+    # Verify SID computation: advance from TID as initial seed
+    for r in results[:5]:
+        state = rng_engine.advance_n(r["tid"], r["advance"])
+        expected_sid = rng_engine.high16(state)
         test_eq(f"SID at advance {r['advance']}", r["sid"], expected_sid)
 
-    # Test with a realistic TID (should find candidates)
-    results_real = tid_sid.find_sids_for_tid(12345, min_advance=1000, max_advance=100000)
-    test("realistic TID finds candidates", len(results_real) > 0)
-    for r in results_real:
-        test_eq(f"TID={r['tid']} matches", r["tid"], 12345)
+    # Test with realistic TID
+    results_real = tid_sid.find_sids_for_tid(49513, custom_rival_name=True)
+    test("TID=49513 finds candidates", len(results_real) > 0)
+    for r in results_real[:5]:
+        test_eq(f"TID={r['tid']} matches", r["tid"], 49513)
         test("SID valid range", 0 <= r["sid"] <= 65535)
 
-    # Empty range should return no results
-    results_empty = tid_sid.find_sids_for_tid(99999, min_advance=1000, max_advance=1001)
-    test("narrow range may be empty", isinstance(results_empty, list))
+    # Odd advances for preset rival name
+    results_odd = tid_sid.find_sids_for_tid(49513, custom_rival_name=False)
+    test("preset rival finds candidates", len(results_odd) > 0)
+    if results_odd:
+        test("odd advances only", all(r["advance"] % 2 == 1 for r in results_odd))
+    if results:
+        test("even advances only (custom)", all(r["advance"] % 2 == 0 for r in results))
 
 
 def test_narrow_sid_candidates():
     print("Testing narrow_sid_candidates...")
 
-    # Set up: get SID candidates for TID 12345
-    candidates = tid_sid.find_sids_for_tid(12345, min_advance=1000, max_advance=100000)
+    # Set up: get SID candidates using Lincoln's method
+    candidates = tid_sid.find_sids_for_tid(12345, custom_rival_name=True)
     test("have candidates to narrow", len(candidates) > 0)
 
     if not candidates:

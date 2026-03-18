@@ -37,3 +37,6 @@ pause_requested.flag
 .vscode/
 1~
 *.log
+
+# Deprecated scripts
+run_sequence.sh

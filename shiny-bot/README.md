@@ -1,20 +1,90 @@
-# Introduction 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+# shiny-bot (Wi-Fi)
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+Automated shiny starter hunting for **Pokemon FireRed/LeafGreen** on Nintendo Switch. Soft resets in a loop, picks the starter, opens the summary screen, and checks for the shiny sprite border — all over Wi-Fi.
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+## How It Works
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+1. **Soft reset** the game via the Pico's `reset` macro (HOME → close → relaunch).
+2. **Run the button sequence** — mash through the title screen, load the save, pick the starter, decline the nickname, wait for the rival battle, then open the Pokemon summary.
+3. **Check for shiny** — capture a frame from the USB capture card and sample pixels along the sprite border. If the border color differs from the known normal palette, it's shiny.
+4. **Recovery** — if the game state is unexpected (e.g., stuck in dialogue), the bot detects it and navigates back to the summary screen automatically.
+5. **Repeat** until a shiny is found.
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+## Setup
+
+### Prerequisites
+
+- Raspberry Pi Pico W flashed with the Wi-Fi firmware (`pico-fw/build/shinybot_pico_fw.uf2`)
+- USB capture card connected to the Switch
+- macOS with Python 3.9+
+
+### Install
+
+```bash
+cd shiny-bot
+python3 -m venv venv
+source venv/bin/activate
+pip install opencv-python numpy
+```
+
+### Configure Pico IP
+
+Set the IP address of your Pico W:
+
+```bash
+export PICO_IP=192.168.1.100
+```
+
+Or edit the default in `pico.py`.
+
+### Build Firmware (optional)
+
+If you need to rebuild the Pico firmware:
+
+```bash
+cd pico-fw/build
+cmake .. -DPICO_BOARD=pico_w \
+  -DWIFI_SSID='"YourSSID"' \
+  -DWIFI_PASSWORD='"YourPassword"'
+cmake --build . -j
+```
+
+Then flash `shinybot_pico_fw.uf2` to the Pico (hold BOOTSEL, plug in USB, copy the file).
+
+## Usage
+
+### Web Control Panel
+
+```bash
+python3 web_control.py
+# Open http://localhost:8000
+```
+
+The web UI provides:
+- **Start / Stop / Restart** the hunt loop
+- **Pause After Check** — pause between attempts (useful for inspecting a result)
+- **Manual buttons** — A, B, X for testing
+- **Check Starter** — navigate to summary screen manually
+- **Save Shiny** — run the save sequence when you find one
+
+### Command Line
+
+```bash
+# Run the hunt loop directly
+python3 hunt_loop.py
+# Press ESC at any time to stop gracefully
+```
+
+## Files
+
+| File | Purpose |
+|------|---------|
+| `hunt_loop.py` | Main automation loop (reset → sequence → detect → repeat) |
+| `run_sequence.py` | Button sequence for one soft-reset attempt |
+| `check_border.py` | Shiny detection via sprite border pixel sampling |
+| `web_control.py` | HTTP server for the web control panel |
+| `pico.py` | Pico W HTTP communication module |
+| `pixel_tools.py` | Live pixel coordinate probing (calibration helper) |
+| `record_sequence.py` | Record button sequences via keyboard for tuning |
+| `pico-fw/` | Pico W firmware source (C, CMake) |
+| `OPTIMIZATIONS.md` | Performance optimization notes |

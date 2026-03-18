@@ -1,0 +1,64 @@
+YoggTwo's RNG Manipulation Overview - FireRed/LeafGreen Switch
+===============================================================
+Source: YouTube (longer overview/story video)
+
+KEY TECHNICAL POINTS:
+=====================
+
+INITIAL SEEDS:
+- Appear in linear sequence from hard reboot only
+- Do NOT soft reset — always watch entire intro
+- New seed appears every 16 milliseconds
+- Pulls from CPU internal clock (timer 1), faster than 60fps
+- Game only reads inputs every frame
+- Seeds are different for Fire Red vs Leaf Green
+- Intro timers adjusted for Switch 1 vs Switch 2
+- Master seed list created by community seedbot (custom code)
+- Seeds need to be farmed in order for calibration
+
+WIRELESS MODE DISCOVERY:
+- Wireless mode is ALWAYS enabled in FRLG on Switch
+- Once off file select, RNG advances at 2x speed
+- Mystery Gift does NOT fix this (was initially thought it did)
+- This is why triple frame perfect input is needed:
+  1. Initial seed timing
+  2. Advances at 1x speed at file select
+  3. Advances at 2x speed when claiming Pokemon
+
+HOME BUFFER DISCOVERY:
+- Discovered after initial RNG attempts
+- Makes seeds more stable
+- Required seedbot farms to restart with new method
+
+TID/SID GENERATION:
+- Secret ID generated after choosing character name
+- Once you press Start on name selection, RNG is underway
+- Originally used 901 advance timer, applied to this too
+- Must account for 2x RNG speed
+- Tool: input TID (from trainer card) → convert to hex → get possible SIDs
+- Rival name choice locks you into even or odd frames for SID generation
+  - Custom name → even advances
+  - Preset name (e.g. "Green") → odd advances
+
+SID ELIMINATION PROCESS:
+- Process of elimination — tedious
+- Hit targets that would only be shiny if specific SID is correct
+- If target is not shiny → that SID is eliminated, try next one
+- Getting shiny starter + finding SID simultaneously is advanced
+
+EONTIMER CONSOLE SETTING:
+- Use Gen 3/GBA as the console setting
+- Works for both Switch 1 and Switch 2
+- Previously used custom console with higher frame rate (worked via calibration)
+- GBA setting is the correct one
+
+BUTTON SETTINGS:
+- Button settings and which button you push at start screen affect seeds
+- Settings matter for consistency
+
+DISCOVERIES TIMELINE:
+- Wireless mode always on → 2x speed overworld
+- Mystery Gift doesn't fix it
+- Home buffer for stability
+- Rival name affects even/odd SID advances
+- Constant new discoveries kept invalidating potential guides
