@@ -2,7 +2,7 @@
 
 **RNG manipulation bot** for frame-perfect shiny starters in **Pokemon FireRed/LeafGreen** on Nintendo Switch (GBA Virtual Console).
 
-Based on [Blissey's FRLG Switch shiny starter tutorial](https://www.youtube.com/watch?v=example) — uses a 3-phase timer model to hit a specific RNG advance for a guaranteed shiny with desired nature/IVs.
+Based on [Blissey's FRLG Switch shiny starter tutorial](https://www.youtube.com/watch?v=DfO2Zb9i3Bs) — uses a 3-phase timer model to hit a specific RNG advance for a guaranteed shiny with desired nature/IVs.
 
 ## How It Works
 
