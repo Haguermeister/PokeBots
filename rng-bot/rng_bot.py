@@ -42,16 +42,15 @@ STATUS_FILE = BASE_DIR / "rng_bot_status.json"
 # NX frame rate
 FRAME_RATE = 16777216 / 280896  # ≈ 59.7275 fps
 
-# Ten Lines overworld frames setting (produces 1000 RNG advances at 2x speed)
-TEN_LINES_OVERWORLD_FRAMES = 500
-
-# EonTimer Phase 3 frame count (accounts for screen transitions/delays)
-# Per Papa Jefe: 574 frames → actual 1000 overworld RNG advances on
-# cutscene-less Static encounters/Gifts
-EONTIMER_OVERWORLD_FRAMES = 574
-
-# Overworld RNG advances = TEN_LINES_OVERWORLD_FRAMES * 2 = 1000
-OVERWORLD_ADVANCES = TEN_LINES_OVERWORLD_FRAMES * 2
+# Overworld frame presets (Ten Lines value / EonTimer value)
+# Blissey's legendary tutorial (default): 600/600 → 1200 overworld RNG advances
+# YoggTwo/compact mode (Papa Jefe tip):   500/574 → 1000 overworld RNG advances
+# Both are valid. 600/600 is recommended for general use.
+OVERWORLD_PRESETS = {
+    "standard": {"ten_lines": 600, "eontimer": 600, "advances": 1200},
+    "compact":  {"ten_lines": 500, "eontimer": 574, "advances": 1000},
+}
+DEFAULT_OVERWORLD_PRESET = "compact"
 
 # How many attempts before giving up
 MAX_ATTEMPTS = 100
@@ -166,28 +165,40 @@ def calculate_phase1_ms(seed_frame: int, timer_offset_ms: float = 0) -> float:
     return (seed_frame / FRAME_RATE) * 1000 + timer_offset_ms
 
 
+def _get_preset(st: dict = None) -> dict:
+    """Get the active overworld preset from state or default."""
+    name = DEFAULT_OVERWORLD_PRESET
+    if st and "overworld_preset" in st:
+        name = st["overworld_preset"]
+    return OVERWORLD_PRESETS.get(name, OVERWORLD_PRESETS[DEFAULT_OVERWORLD_PRESET])
+
+
 def calculate_phase2_ms(
     target_advance: int,
     cal_offset_ms: float = 0,
+    preset: dict | None = None,
 ) -> float:
     """Phase 2: Continue screen wait time.
 
     On the Continue/New Game screen, RNG advances at 1x per frame.
-    Continue screen advances = target_advance - OVERWORLD_ADVANCES (1000).
-    No English offset here — that's only for TID/SID calculation.
+    Continue screen advances = target_advance - overworld_advances.
     """
-    continue_screen_advances = target_advance - OVERWORLD_ADVANCES
+    if preset is None:
+        preset = OVERWORLD_PRESETS[DEFAULT_OVERWORLD_PRESET]
+    continue_screen_advances = target_advance - preset["advances"]
     return (continue_screen_advances / FRAME_RATE) * 1000 + cal_offset_ms
 
 
-def calculate_phase3_ms() -> float:
+def calculate_phase3_ms(preset: dict | None = None) -> float:
     """Phase 3: Overworld wait time.
 
-    EonTimer uses 574 frames (not 500) to account for screen transitions
-    and delays between pressing A and actual RNG consumption.
-    574 frames ≈ 9613ms.
+    Uses the EonTimer frame count from the selected preset.
+    Standard: 600 frames ≈ 10046ms
+    Compact:  574 frames ≈ 9610ms
     """
-    return (EONTIMER_OVERWORLD_FRAMES / FRAME_RATE) * 1000
+    if preset is None:
+        preset = OVERWORLD_PRESETS[DEFAULT_OVERWORLD_PRESET]
+    return (preset["eontimer"] / FRAME_RATE) * 1000
 
 
 # ── Game Sequences ───────────────────────────────────────────────────────────
@@ -363,18 +374,39 @@ def run_three_phase(phase1_ms: float, phase2_ms: float, phase3_ms: float,
     # ── Phase 3: Overworld (2x RNG speed) ──
     time.sleep(1.5)  # save loading
 
+    # Start menu NPC trick (from Blissey's legendary tutorial):
+    # Open start menu immediately to freeze wandering NPCs that could
+    # affect RNG. Close it near the end of the timer before pressing A.
+    has_npcs = encounter_type in ("game_corner", "legendary")
+    if has_npcs:
+        log("  Opening start menu (NPC freeze)...")
+        pico.send_cmd("press X 120")
+        time.sleep(0.5)
+
     if encounter_type == "starter":
         _phase3_mash_starter()
     elif encounter_type == "game_corner":
         _phase3_mash_game_corner()
+    elif encounter_type == "legendary":
+        pass  # For legendaries, just wait — A press is the first interaction
     else:
         _phase3_mash_static()
 
     p3_target = p3_start + phase3_ms / 1000
     remaining = p3_target - time.perf_counter()
     if remaining > 0:
-        log(f"  Waiting {remaining:.1f}s for Phase 3 timer...")
-        precise_sleep(remaining)
+        if has_npcs and remaining > 1.5:
+            # Wait most of the time with menu open, close near the end
+            precise_sleep(remaining - 1.0)
+            log("  Closing start menu...")
+            pico.send_cmd("press X 120")
+            time.sleep(0.3)
+            remaining = p3_target - time.perf_counter()
+            if remaining > 0:
+                precise_sleep(remaining)
+        else:
+            log(f"  Waiting {remaining:.1f}s for Phase 3 timer...")
+            precise_sleep(remaining)
     else:
         log(f"  WARNING: mashing took {-remaining:.1f}s longer than Phase 3 budget!")
     if stop_requested:
@@ -566,10 +598,21 @@ def identify_hit_advance(
 
 
 def apply_calibration_offset(st: dict, actual_advance: int) -> float:
-    """Apply timer offset based on actual advance hit. Returns ms adjustment."""
+    """Apply timer offset based on actual advance hit. Returns ms adjustment.
+
+    Per Blissey: don't adjust if within ±2 advances (~±17ms) — that's
+    human/switch variance, not real miscalibration. Only adjust if
+    consistently off by the same amount.
+    """
     target = st.get("target_pokemon", {})
     target_advance = target.get("advance", 0)
     offset = actual_advance - target_advance
+
+    # Dead zone: ±2 advances is normal human/switch jitter
+    if abs(offset) <= 2:
+        log(f"  Offset {offset:+d} is within dead zone (±2) — no adjustment")
+        return 0.0
+
     offset_ms = calibration.advance_offset_to_ms(offset)
 
     old_cal = st.get("calibration_offset_ms", 0)
@@ -617,7 +660,8 @@ def find_best_target_for_sid(
             initial_seed, tid, sid, min_advance, max_advance,
         )
         for s in shinies:
-            continue_advances = s["advance"] - OVERWORLD_ADVANCES
+            preset = OVERWORLD_PRESETS[DEFAULT_OVERWORLD_PRESET]
+            continue_advances = s["advance"] - preset["advances"]
             if continue_advances < min_continue_advances:
                 continue  # too tight for Continue screen timing
 
@@ -699,11 +743,12 @@ def run_single_attempt(st: dict, reader: screen_reader.ScreenReader, dry_run: bo
     encounter_type = st.get("encounter_type", "game_corner")
     has_pokedex = st.get("has_pokedex", True)
 
+    preset = _get_preset(st)
     phase1_ms = calculate_phase1_ms(seed_frame, timer_offset)
-    phase2_ms = calculate_phase2_ms(target_advance, cal_offset)
-    phase3_ms = calculate_phase3_ms()
+    phase2_ms = calculate_phase2_ms(target_advance, cal_offset, preset)
+    phase3_ms = calculate_phase3_ms(preset)
 
-    continue_advances = target_advance - OVERWORLD_ADVANCES
+    continue_advances = target_advance - preset["advances"]
 
     attempt_num = st.get("attempts", 0) + 1
     log(f"{'='*60}")
@@ -713,7 +758,7 @@ def run_single_attempt(st: dict, reader: screen_reader.ScreenReader, dry_run: bo
     log(f"  Encounter type: {encounter_type}")
     log(f"  Phase 1 (seed):      {phase1_ms:.1f}ms ({phase1_ms/1000:.1f}s)")
     log(f"  Phase 2 (continue):  {phase2_ms:.1f}ms ({phase2_ms/1000:.1f}s) [{continue_advances} advances @ 1x]")
-    log(f"  Phase 3 (overworld): {phase3_ms:.1f}ms ({phase3_ms/1000:.1f}s) [574 EonTimer frames]")
+    log(f"  Phase 3 (overworld): {phase3_ms:.1f}ms ({phase3_ms/1000:.1f}s) [{preset['eontimer']} EonTimer frames]")
     log(f"  Calibration offset: {cal_offset:.1f}ms")
 
     if dry_run:
@@ -931,8 +976,9 @@ def main():
     log(f"  Seed: 0x{st['selected_seed']} | TID: {st['tid']} | SID: {st['sid']}")
     log(f"  Encounter type: {encounter_type}")
     log(f"  Calibration: {st.get('calibration_offset_ms', 0):.1f}ms")
-    log(f"  Continue advances: {target.get('advance', 0) - OVERWORLD_ADVANCES}")
-    log(f"  Phase 3 EonTimer frames: {EONTIMER_OVERWORLD_FRAMES}")
+    preset = _get_preset(st)
+    log(f"  Continue advances: {target.get('advance', 0) - preset['advances']}")
+    log(f"  Phase 3 EonTimer frames: {preset['eontimer']}")
 
     reader = screen_reader.ScreenReader()
     if not args.dry_run:

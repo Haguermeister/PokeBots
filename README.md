@@ -96,9 +96,20 @@ PokeBots/
 
 ## Acknowledgments
 
-- **Blissey** — FRLG Switch RNG manipulation tutorial and seed data
-- **YoggTwo** — Static RNG tutorial, RNG overview, and community discoveries
-- **Papa Jefe** — Seed farming, RNG method discovery, EonTimer overworld frame correction (574 frames for 1000 advances)
-- **Lincoln** — Ten Lines tool and SID calculation method
+- **[Blissey (imablisy)](https://www.youtube.com/@imablisy)** — FRLG Switch RNG tutorials (starter, legendary/static), seed data, [retailrng.com](https://retailrng.com/)
+- **[YoggTwo](https://www.youtube.com/@yoggtwo)** — Static RNG tutorial, RNG overview, and community discoveries
+- **Papa Jefe** — Seed farming, RNG method discovery, EonTimer overworld frame correction
+- **[Lincoln](https://lincoln-lm.github.io/ten-lines-Pokemon-RNG/)** — [Ten Lines](https://lincoln-lm.github.io/ten-lines-Pokemon-RNG/) tool and SID calculation method
+- **[DasAmpharos](https://dasampharos.github.io/EonTimer/)** — [EonTimer](https://dasampharos.github.io/EonTimer/) web timer
+- **[Admiral Fish](https://github.com/Admiral-Fish/PokeFinder)** — PokeFinder RNG tool
 - **Pico SDK** — Raspberry Pi Pico C/C++ SDK
 - **TinyUSB** — USB HID stack for the Pico
+
+## Resources
+
+- [Ten Lines RNG Tool](https://lincoln-lm.github.io/ten-lines-Pokemon-RNG/)
+- [EonTimer](https://dasampharos.github.io/EonTimer/)
+- [PokeFinder](https://github.com/Admiral-Fish/PokeFinder)
+- [Retail RNG Guides](https://retailrng.com/)
+- [Pokemon RNG Wiki](https://pokemon-rng.com/)
+- [PokemonRNG.net](https://pokemonrng.net/)

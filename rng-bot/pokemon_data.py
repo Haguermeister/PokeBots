@@ -163,6 +163,52 @@ ENCOUNTER_CATEGORIES = {
     "static": list(STATIC_POKEMON.keys()),
 }
 
+# Generation trigger info per Pokemon (from Blissey's legendary tutorial)
+# "trigger" = what generates the Pokemon (determines when to press A)
+# "has_npcs" = whether wandering NPCs are nearby (need start menu trick)
+# "animation_frames" = if the Pokemon has a long pre-battle animation, may need
+#                       more overworld frames (0 = default 600 is fine)
+GENERATION_TRIGGERS = {
+    # Starters — "energetic" screen
+    "Bulbasaur":  {"trigger": "energetic_screen", "has_npcs": False, "animation_frames": 0},
+    "Charmander": {"trigger": "energetic_screen", "has_npcs": False, "animation_frames": 0},
+    "Squirtle":   {"trigger": "energetic_screen", "has_npcs": False, "animation_frames": 0},
+    # Game Corner — press A to confirm exchange
+    "Abra":     {"trigger": "confirm_receive", "has_npcs": True, "animation_frames": 0},
+    "Clefairy": {"trigger": "confirm_receive", "has_npcs": True, "animation_frames": 0},
+    "Scyther":  {"trigger": "confirm_receive", "has_npcs": True, "animation_frames": 0},
+    "Dratini":  {"trigger": "confirm_receive", "has_npcs": True, "animation_frames": 0},
+    "Porygon":  {"trigger": "confirm_receive", "has_npcs": True, "animation_frames": 0},
+    "Pinsir":   {"trigger": "confirm_receive", "has_npcs": True, "animation_frames": 0},
+    # Gifts — press A to receive
+    "Eevee":      {"trigger": "confirm_receive", "has_npcs": False, "animation_frames": 0},
+    "Hitmonlee":  {"trigger": "confirm_receive", "has_npcs": False, "animation_frames": 0},
+    "Hitmonchan": {"trigger": "confirm_receive", "has_npcs": False, "animation_frames": 0},
+    "Lapras":     {"trigger": "confirm_receive", "has_npcs": False, "animation_frames": 0},
+    "Togepi":     {"trigger": "confirm_receive", "has_npcs": False, "animation_frames": 0},
+    # Legendary birds — press A IN FRONT (first interaction, not last dialogue!)
+    "Articuno": {"trigger": "first_a_press", "has_npcs": False, "animation_frames": 0},
+    "Zapdos":   {"trigger": "first_a_press", "has_npcs": False, "animation_frames": 0},
+    "Moltres":  {"trigger": "first_a_press", "has_npcs": False, "animation_frames": 0},
+    # Other legendaries
+    "Mewtwo":  {"trigger": "first_a_press", "has_npcs": False, "animation_frames": 0},
+    "Deoxys":  {"trigger": "first_a_press", "has_npcs": False, "animation_frames": 1200},
+    # Stationary wilds
+    "Snorlax": {"trigger": "first_a_press", "has_npcs": False, "animation_frames": 0},
+    "Hypno":   {"trigger": "first_a_press", "has_npcs": True, "animation_frames": 0},
+    # Ho-Oh/Lugia — press UP to walk (no A press!)
+    "Ho-Oh": {"trigger": "walk_up", "has_npcs": False, "animation_frames": 600},
+    "Lugia": {"trigger": "walk_up", "has_npcs": False, "animation_frames": 600},
+}
+
+def get_trigger_info(pokemon_name: str) -> dict:
+    """Get generation trigger info for a Pokemon, with safe defaults."""
+    return GENERATION_TRIGGERS.get(pokemon_name, {
+        "trigger": "confirm_receive",
+        "has_npcs": False,
+        "animation_frames": 0,
+    })
+
 # Pokemon that appear in early-game battles (for EV tracking during calibration)
 # Rival's starter is based on your choice:
 #   Bulbasaur -> Charmander, Charmander -> Squirtle, Squirtle -> Bulbasaur

@@ -1,0 +1,95 @@
+Blissey's (imablisy) Legendary/Static RNG Tutorial - FireRed/LeafGreen Switch
+============================================================
+Source: https://www.youtube.com/watch?v=Gtxa6CyTOGM
+
+PREREQUISITES:
+- Master Ball (for catching wild legendaries to check stats)
+- 3-5 Rare Candies (helps identify low-level Pokemon stats)
+- Options: Sound=Mono, Button Mode=Help
+- Save in front of target Pokemon
+
+EONTIMER SETUP:
+- Console: GBA (even though on Switch!)
+- Custom tab, 3 timers:
+  - Timer 1: Milliseconds (seed timing from 10 Lines)
+  - Timer 2: Advances (continue screen frames from 10 Lines)
+  - Timer 3: Advances = 600 (overworld frames, NEVER CHANGE/CALIBRATE)
+
+TEN LINES SETUP:
+- Game: Switch Fire Red or Switch Leaf Green (same for all languages except Japanese)
+- Sound: Mono, Button Mode: Help
+- Seed Button: A, Extra Button: None
+- Console: Switch 1 or Switch 2 (changes timing values)
+- Target seed: blank initially, then paste target seed
+- Seed ±: 50 for initial search, 20 for calibration
+- Min advances: 1000, Max advances: 5000
+- Required overworld frames: 600
+- Method: Static 1
+- Category: starters/fossils/gifts/game corner/stationary/legendaries/events/roamers
+- Shininess: star/square
+
+TIMER MATH:
+- Total advances = continue_screen_frames + (overworld_frames × 2)
+- Example: 425 continue + 600×2 = 1625 total advances
+- Continue screen frames = total_advances - 1200 (with 600 overworld)
+- Only calibrate timer 1 (seed ms) and timer 2 (continue frames)
+- NEVER calibrate timer 3 (overworld frames)
+
+ADJUSTING OVERWORLD FOR LONG ANIMATIONS:
+- Default 600 works for most Pokemon
+- For long animations (e.g., Deoxys): increase overworld frames to 1200+
+- This reduces continue screen time but gives more overworld time
+- Some targets may become impossible if animation consumes too many advances
+
+WHEN TO PRESS A (Generation Trigger):
+- NOT always the last dialogue box!
+- Legendary birds: Press A IN FRONT of it (first interaction)
+- Deoxys: Press A in front of the red triangle
+- Ho-Oh: Press UP (no A press — walking triggers it)
+- Game Corner: varies
+- Full list at: pokerailrng.com
+
+START MENU TRICK (IMPORTANT):
+- After continuing/loading save, press B immediately to open start menu
+- Wandering NPCs can affect RNG — start menu prevents NPC movement
+- Close start menu on the 5th beep
+- Talk to/interact with Pokemon on the final (6th) beep
+
+BOOT SEQUENCE:
+1. Close the game
+2. Launch game → immediately press HOME
+   - Switch 1: don't press too quickly or it cancels launch
+   - Switch 2: can be very fast
+   - OK to see Switch logo, NOT OK to see copyright/game text
+3. Start EonTimer + press A to resume at the same time
+4. Watch entire intro (don't press anything!)
+5. When timer 1 finishes: press and HOLD A at title screen
+6. Continue screen appears → wait for timer 2
+7. When timer 2 finishes: press A to continue
+8. Press B immediately to open start menu (NPC trick)
+9. Close start menu on 5th beep of timer 3
+10. Press A on final beep (generation trigger)
+
+CALIBRATION PROCEDURE:
+1. Catch the Pokemon (Master Ball recommended)
+2. Check stats, nature, gender
+3. Input into 10 Lines IV calculator (nature, level, stats)
+4. If more than 1 result: use Rare Candy to level up, add another stat row
+5. Copy "hit" seed ms value → paste into EonTimer timer 1 hit field
+6. Copy "hit" continue screen frames → paste into EonTimer timer 2 hit field
+7. Click EonTimer "update" button
+8. DON'T adjust if within 2 advances or ~30ms — that's human/switch variance
+9. Only adjust if consistently off by the same amount 5-6 times
+
+MISSING SEED ISSUE:
+- If aiming for one of the first 5-10 seeds, you might hit an unrecorded seed
+- 10 Lines will show "no results" — this doesn't mean you did something wrong
+- Increase seed ± range or try again
+- Less likely with seeds in the middle of the list
+
+NOTE ON 500/574 vs 600/600:
+- This tutorial uses 600/600 as the standard approach
+- Papa Jefe mentioned 500/574 as an alternative on YoggTwo's video
+- 500/574: 1000 overworld advances (tighter, more precise for cutscene-less)
+- 600/600: 1200 overworld advances (more forgiving, general purpose)
+- Both are valid — 600/600 is the recommended default per Blissey
