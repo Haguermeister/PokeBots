@@ -205,17 +205,60 @@
         <button class="btn-primary" onclick="computeSID()">Compute SID from TID</button>
         <button class="btn-primary" onclick="saveTID()">Save (Manual Entry)</button>
       </div>
+      <div style="margin-top:10px">
+        <label style="display:inline;cursor:pointer">
+          <input type="checkbox" id="input-sid-confirmed" style="width:auto;margin-right:6px">
+          SID Confirmed (skip SID elimination)
+        </label>
+      </div>
       <div id="sid-candidates" style="display:none;margin-top:10px;font-size:0.85em;color:var(--muted)"></div>
     </div>
 
     <div class="card">
       <h2>Pokemon</h2>
-      <label>Starter</label>
-      <select id="input-pokemon" onchange="updatePokemon()">
-        <option value="Bulbasaur">Bulbasaur</option>
-        <option value="Charmander">Charmander</option>
-        <option value="Squirtle">Squirtle</option>
-      </select>
+      <div class="row">
+        <div>
+          <label>Encounter Type</label>
+          <select id="input-encounter" onchange="updateEncounterType()">
+            <option value="game_corner">Game Corner</option>
+            <option value="starter">Starter</option>
+            <option value="static">Static / Gift</option>
+            <option value="legendary">Legendary</option>
+          </select>
+        </div>
+        <div>
+          <label>Pokemon</label>
+          <select id="input-pokemon" onchange="updatePokemon()">
+            <optgroup label="Game Corner">
+              <option value="Scyther">Scyther (Lv25)</option>
+              <option value="Abra">Abra (Lv9)</option>
+              <option value="Clefairy">Clefairy (Lv8)</option>
+              <option value="Dratini">Dratini (Lv18)</option>
+              <option value="Porygon">Porygon (Lv26)</option>
+              <option value="Pinsir">Pinsir (Lv25, LG)</option>
+            </optgroup>
+            <optgroup label="Starters">
+              <option value="Bulbasaur">Bulbasaur (Lv5)</option>
+              <option value="Charmander">Charmander (Lv5)</option>
+              <option value="Squirtle">Squirtle (Lv5)</option>
+            </optgroup>
+            <optgroup label="Static / Gift">
+              <option value="Eevee">Eevee (Lv25)</option>
+              <option value="Hitmonlee">Hitmonlee (Lv25)</option>
+              <option value="Hitmonchan">Hitmonchan (Lv25)</option>
+              <option value="Lapras">Lapras (Lv25)</option>
+              <option value="Togepi">Togepi (Lv5)</option>
+            </optgroup>
+            <optgroup label="Legendaries">
+              <option value="Articuno">Articuno (Lv50)</option>
+              <option value="Zapdos">Zapdos (Lv50)</option>
+              <option value="Moltres">Moltres (Lv50)</option>
+              <option value="Mewtwo">Mewtwo (Lv70)</option>
+              <option value="Deoxys">Deoxys</option>
+            </optgroup>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div class="card">

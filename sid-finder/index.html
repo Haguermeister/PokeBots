@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>SID Finder — FRLG Gen 3</title>
+<style>
+  :root {
+    --bg: #0b0e14; --card: #14181f; --border: #2d3138;
+    --text: #f8f8f8; --muted: #8b949e; --accent: #58a6ff;
+    --gold: #ffd700; --green: #3fb950; --red: #f85149; --orange: #f0883e;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, 'SF Pro Text', sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; }
+  .container { max-width: 900px; margin: 0 auto; padding: 16px; }
+  h1 { text-align: center; font-size: 1.4em; margin-bottom: 16px; }
+  h2 { font-size: 1em; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .card.gold { border-color: var(--gold); }
+  label { font-size: 0.85em; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 1em; margin-bottom: 10px; }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+  button { padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer; transition: transform 0.08s; }
+  button:active { transform: scale(0.95); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-gold { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #1a1a1a; }
+  .btn-sm { padding: 6px 14px; font-size: 0.85em; }
+  .btn-block { width: 100%; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card); border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+  .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.9em; color: var(--muted); }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:not(.active):hover { background: rgba(255,255,255,0.05); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+  th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600; border-bottom: 2px solid var(--border); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .iv-exact { color: var(--green); font-weight: 700; }
+  .iv-ambiguous { color: var(--orange); }
+  .iv-perfect { color: var(--gold); font-weight: 700; }
+  .step-num { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85em; margin-right: 8px; }
+  .ev-counter { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .ev-counter button { padding: 4px 12px; font-size: 1.1em; min-width: 36px; }
+  .ev-counter .count { font-size: 1.2em; font-weight: 700; min-width: 40px; text-align: center; font-family: monospace; }
+  .ev-counter .label { color: var(--muted); font-size: 0.85em; min-width: 100px; }
+  .result-card { padding: 14px; border-radius: 10px; margin-bottom: 10px; border: 1px solid var(--border); }
+  .result-card.match { border-color: var(--gold); background: rgba(255,215,0,0.05); }
+  .sid-badge { display: inline-block; padding: 4px 12px; border-radius: 6px; background: var(--gold); color: #1a1a1a; font-weight: 700; font-size: 1.1em; margin: 2px; }
+  .hint { font-size: 0.82em; color: var(--muted); margin-bottom: 10px; }
+  @media (max-width: 600px) { .row { flex-direction: column; gap: 0; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>&#128270; SID Finder</h1>
+  <p style="text-align:center;color:var(--muted);margin-bottom:16px;font-size:0.9em">
+    Find your Secret ID from a random shiny in FireRed / LeafGreen
+  </p>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('pokemon')">&#9312; Pokemon</div>
+    <div class="tab" onclick="switchTab('evs')">&#9313; EV Tracker</div>
+    <div class="tab" onclick="switchTab('ivs')">&#9314; IVs</div>
+    <div class="tab" onclick="switchTab('sid')">&#9315; SID</div>
+  </div>
+
+  <!-- ═══ STEP 1: POKEMON INFO ═══ -->
+  <div class="panel active" id="panel-pokemon">
+    <div class="card">
+      <h2><span class="step-num">1</span> Your Shiny Pokemon</h2>
+      <p class="hint">Enter the species, nature, and gender of the random shiny you found.</p>
+      <div class="row">
+        <div>
+          <label>Pokemon Species</label>
+          <select id="pkmn-species" onchange="onSpeciesChange()"></select>
+        </div>
+        <div>
+          <label>Nature</label>
+          <select id="pkmn-nature"></select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Gender</label>
+          <select id="pkmn-gender">
+            <option value="">Unknown</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Genderless">Genderless</option>
+          </select>
+        </div>
+        <div>
+          <label>Your Trainer ID</label>
+          <input type="number" id="pkmn-tid" min="0" max="65535" placeholder="e.g. 31735">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-num">2</span> Stats at Catch Level</h2>
+      <p class="hint">Enter the stats exactly as shown on the summary screen. Level is auto-filled but you can change it.</p>
+      <div class="row">
+        <div><label>Level</label><input type="number" id="stat-level-1" min="1" max="100" value="5"></div>
+        <div><label>HP</label><input type="number" id="stat-hp-1" min="1"></div>
+        <div><label>Atk</label><input type="number" id="stat-atk-1" min="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Def</label><input type="number" id="stat-def-1" min="1"></div>
+        <div><label>SpA</label><input type="number" id="stat-spa-1" min="1"></div>
+        <div><label>SpD</label><input type="number" id="stat-spd-1" min="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Spe</label><input type="number" id="stat-spe-1" min="1"></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="card" id="level2-card" style="display:none">
+      <h2>Stats After Leveling Up</h2>
+      <p class="hint">Use a Rare Candy or battle to gain 1 level, then enter the new stats. This narrows down ambiguous IVs.</p>
+      <div class="row">
+        <div><label>Level</label><input type="number" id="stat-level-2" min="1" max="100"></div>
+        <div><label>HP</label><input type="number" id="stat-hp-2" min="1"></div>
+        <div><label>Atk</label><input type="number" id="stat-atk-2" min="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Def</label><input type="number" id="stat-def-2" min="1"></div>
+        <div><label>SpA</label><input type="number" id="stat-spa-2" min="1"></div>
+        <div><label>SpD</label><input type="number" id="stat-spd-2" min="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Spe</label><input type="number" id="stat-spe-2" min="1"></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <div class="card" id="level3-card" style="display:none">
+      <h2>Stats After 2nd Level Up</h2>
+      <p class="hint">Another level narrows IVs further. Make sure to track EVs if gained through battle.</p>
+      <div class="row">
+        <div><label>Level</label><input type="number" id="stat-level-3" min="1" max="100"></div>
+        <div><label>HP</label><input type="number" id="stat-hp-3" min="1"></div>
+        <div><label>Atk</label><input type="number" id="stat-atk-3" min="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Def</label><input type="number" id="stat-def-3" min="1"></div>
+        <div><label>SpA</label><input type="number" id="stat-spa-3" min="1"></div>
+        <div><label>SpD</label><input type="number" id="stat-spd-3" min="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Spe</label><input type="number" id="stat-spe-3" min="1"></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;margin-bottom:14px">
+      <button class="btn-primary" onclick="addLevelRow()">+ Add Level</button>
+      <button class="btn-success btn-block" onclick="calculateIVs()">Calculate IVs →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2: EV TRACKER ═══ -->
+  <div class="panel" id="panel-evs">
+    <div class="card">
+      <h2><span class="step-num">EV</span> Battle EV Tracker</h2>
+      <p class="hint">
+        If you leveled up via battles (not Rare Candies), track EVs here.
+        EVs affect stat calculations — wrong EVs = wrong IVs.
+        Route 1 &amp; 2: Pidgey/Rattata = 1 Spe, Caterpie = 1 HP (FR only), Weedle = 1 Spe (LG only).
+      </p>
+      <div class="row" style="margin-bottom:14px">
+        <div>
+          <label>Game Version</label>
+          <select id="ev-version" onchange="updateRouteInfo()">
+            <option value="FR">FireRed</option>
+            <option value="LG">LeafGreen</option>
+          </select>
+        </div>
+        <div>
+          <label>Route</label>
+          <select id="ev-route" onchange="updateRouteInfo()">
+            <option value="Route 1">Route 1</option>
+            <option value="Route 2">Route 2</option>
+            <option value="Viridian Forest">Viridian Forest</option>
+          </select>
+        </div>
+      </div>
+      <div id="route-encounters" style="margin-bottom:14px;padding:10px;border-radius:8px;border:1px solid var(--border)"></div>
+
+      <h2 style="margin-top:12px">Quick Add Battles</h2>
+      <div id="quick-battle-buttons" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
+
+      <h2 style="margin-top:12px">Current EVs</h2>
+      <div id="ev-counters"></div>
+
+      <div style="display:flex;gap:10px;margin-top:14px">
+        <button class="btn-danger btn-sm" onclick="resetEVs()">Reset All EVs</button>
+        <button class="btn-primary btn-sm" onclick="undoLastBattle()">Undo Last</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3: IV RESULTS ═══ -->
+  <div class="panel" id="panel-ivs">
+    <div class="card">
+      <h2><span class="step-num">3</span> IV Calculation Results</h2>
+      <div id="iv-results">
+        <p style="color:var(--muted);text-align:center;padding:20px">
+          Enter your Pokemon's stats in Step 1 and click "Calculate IVs" first.
+        </p>
+      </div>
+    </div>
+
+    <div class="card" id="iv-actions" style="display:none">
+      <div id="iv-status" style="margin-bottom:12px;padding:12px;border-radius:8px;border:1px solid var(--border)"></div>
+      <button class="btn-gold btn-block" id="find-sid-btn" onclick="findSID()" disabled>Find My SID →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4: SID RESULTS ═══ -->
+  <div class="panel" id="panel-sid">
+    <div class="card gold">
+      <h2 style="color:var(--gold)">&#9733; Your Secret ID</h2>
+      <div id="sid-results">
+        <p style="color:var(--muted);text-align:center;padding:20px">
+          Complete Steps 1-3 first to find your SID.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let pokemonList = {};
+let natures = [];
+let evYields = {};
+let currentEVs = {hp:0, atk:0, def:0, spe:0, spa:0, spd:0};
+let battleHistory = [];
+let levelRowCount = 1;
+let lastIVResult = null;
+
+// ── Tab switching ──
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+
+// ── API ──
+async function api(endpoint, data) {
+  const res = await fetch('/api/' + endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data || {}),
+  });
+  return res.json();
+}
+
+// ── Init ──
+async function init() {
+  const r = await api('pokemon_list');
+  pokemonList = r.pokemon;
+  natures = r.natures;
+
+  // Populate species dropdown
+  const sel = document.getElementById('pkmn-species');
+  for (const name of Object.keys(pokemonList).sort()) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  }
+
+  // Populate nature dropdown
+  const nSel = document.getElementById('pkmn-nature');
+  for (const n of natures) {
+    const opt = document.createElement('option');
+    opt.value = n;
+    opt.textContent = n;
+    nSel.appendChild(opt);
+  }
+
+  // Load EV yields
+  const evR = await api('ev_yields');
+  evYields = evR.yields;
+
+  onSpeciesChange();
+  renderEVCounters();
+  updateRouteInfo();
+}
+
+function onSpeciesChange() {
+  const name = document.getElementById('pkmn-species').value;
+  const data = pokemonList[name];
+  if (data) {
+    document.getElementById('stat-level-1').value = data.level;
+  }
+}
+
+function addLevelRow() {
+  levelRowCount++;
+  if (levelRowCount === 2) {
+    document.getElementById('level2-card').style.display = 'block';
+    const prevLevel = parseInt(document.getElementById('stat-level-1').value) || 5;
+    document.getElementById('stat-level-2').value = prevLevel + 1;
+  } else if (levelRowCount === 3) {
+    document.getElementById('level3-card').style.display = 'block';
+    const prevLevel = parseInt(document.getElementById('stat-level-2').value) || 6;
+    document.getElementById('stat-level-3').value = prevLevel + 1;
+  }
+}
+
+// ── EV Tracker ──
+function updateRouteInfo() {
+  const version = document.getElementById('ev-version').value;
+  const route = document.getElementById('ev-route').value;
+  const el = document.getElementById('route-encounters');
+  const btnEl = document.getElementById('quick-battle-buttons');
+
+  // Show encounters
+  const encounters = {};
+  try {
+    const routeData = {"Route 1":{"FR":[["Pidgey","1 Spe"],["Rattata","1 Spe"]],"LG":[["Pidgey","1 Spe"],["Rattata","1 Spe"]]},"Route 2":{"FR":[["Pidgey","1 Spe"],["Rattata","1 Spe"],["Caterpie","1 HP"]],"LG":[["Pidgey","1 Spe"],["Rattata","1 Spe"],["Weedle","1 Spe"]]},"Viridian Forest":{"FR":[["Caterpie","1 HP"],["Pikachu","2 Spe"],["Weedle","1 Spe"]],"LG":[["Weedle","1 Spe"],["Pikachu","2 Spe"],["Caterpie","1 HP"]]}};
+    const data = routeData[route]?.[version] || [];
+    el.innerHTML = '<strong style="color:var(--accent)">' + route + ' (' + version + ')</strong><br>' +
+      data.map(([name, ev]) => `<span style="margin-right:12px">${name}: <strong>${ev}</strong></span>`).join('');
+
+    // Quick battle buttons
+    btnEl.innerHTML = '';
+    for (const [name, ev] of data) {
+      const btn = document.createElement('button');
+      btn.className = 'btn-primary btn-sm';
+      btn.textContent = `KO ${name} (${ev})`;
+      btn.onclick = () => addBattle(name);
+      btnEl.appendChild(btn);
+    }
+  } catch(e) {
+    el.textContent = 'No data for this route.';
+    btnEl.innerHTML = '';
+  }
+}
+
+function addBattle(pokemonName) {
+  const yields = {
+    "Pidgey": {"spe":1}, "Rattata": {"spe":1}, "Caterpie": {"hp":1},
+    "Weedle": {"spe":1}, "Pikachu": {"spe":2}, "Spearow": {"spe":1},
+    "Mankey": {"atk":1}, "Metapod": {}, "Kakuna": {},
+  };
+  const evGain = yields[pokemonName] || {};
+  for (const [stat, val] of Object.entries(evGain)) {
+    currentEVs[stat] = (currentEVs[stat] || 0) + val;
+  }
+  battleHistory.push({pokemon: pokemonName, evs: {...evGain}});
+  renderEVCounters();
+}
+
+function undoLastBattle() {
+  if (battleHistory.length === 0) return;
+  const last = battleHistory.pop();
+  for (const [stat, val] of Object.entries(last.evs)) {
+    currentEVs[stat] = Math.max(0, (currentEVs[stat] || 0) - val);
+  }
+  renderEVCounters();
+}
+
+function resetEVs() {
+  currentEVs = {hp:0, atk:0, def:0, spe:0, spa:0, spd:0};
+  battleHistory = [];
+  renderEVCounters();
+}
+
+function renderEVCounters() {
+  const el = document.getElementById('ev-counters');
+  const statNames = {hp:'HP', atk:'Attack', def:'Defense', spa:'Sp.Atk', spd:'Sp.Def', spe:'Speed'};
+  el.innerHTML = '';
+  for (const [stat, label] of Object.entries(statNames)) {
+    const val = currentEVs[stat] || 0;
+    el.innerHTML += `
+      <div class="ev-counter">
+        <span class="label">${label}</span>
+        <button class="btn-danger btn-sm" onclick="adjustEV('${stat}',-1)">−</button>
+        <span class="count">${val}</span>
+        <button class="btn-primary btn-sm" onclick="adjustEV('${stat}',1)">+</button>
+        <span style="color:var(--muted);font-size:0.8em">(${Math.floor(val/4)} stat points)</span>
+      </div>`;
+  }
+  el.innerHTML += `<p style="color:var(--muted);font-size:0.82em;margin-top:8px">
+    Total battles: ${battleHistory.length} | 
+    EVs affect stats at every 4 EVs per stat point</p>`;
+}
+
+function adjustEV(stat, delta) {
+  currentEVs[stat] = Math.max(0, (currentEVs[stat] || 0) + delta);
+  renderEVCounters();
+}
+
+// ── IV Calculation ──
+async function calculateIVs() {
+  const pokemon = document.getElementById('pkmn-species').value;
+  const nature = document.getElementById('pkmn-nature').value;
+  const statRows = [];
+
+  // Row 1 (always present, 0 EVs at catch level)
+  const level1 = parseInt(document.getElementById('stat-level-1').value);
+  const stats1 = getStatRow(1);
+  if (!stats1) { alert('Fill in all stats for the catch level'); return; }
+  statRows.push({level: level1, stats: stats1, evs: {hp:0,atk:0,def:0,spe:0,spa:0,spd:0}});
+
+  // Row 2 (optional)
+  if (levelRowCount >= 2) {
+    const level2 = parseInt(document.getElementById('stat-level-2').value);
+    const stats2 = getStatRow(2);
+    if (stats2) {
+      statRows.push({level: level2, stats: stats2, evs: {...currentEVs}});
+    }
+  }
+
+  // Row 3 (optional)
+  if (levelRowCount >= 3) {
+    const level3 = parseInt(document.getElementById('stat-level-3').value);
+    const stats3 = getStatRow(3);
+    if (stats3) {
+      statRows.push({level: level3, stats: stats3, evs: {...currentEVs}});
+    }
+  }
+
+  const r = await api('reverse_ivs', {pokemon, nature, stat_rows: statRows});
+  lastIVResult = r;
+
+  const el = document.getElementById('iv-results');
+  if (r.error) {
+    el.innerHTML = `<p style="color:var(--red)">${r.error}</p>`;
+    return;
+  }
+
+  // Render IV results
+  let html = '<table><thead><tr><th>Stat</th><th>Possible IVs</th></tr></thead><tbody>';
+  const statOrder = [['hp','HP'],['atk','Attack'],['def','Defense'],['spa','Sp.Atk'],['spd','Sp.Def'],['spe','Speed']];
+  let allExact = true;
+
+  for (const [key, label] of statOrder) {
+    const ivs = r.possible_ivs[key] || [];
+    const cls = ivs.length === 1 ? (ivs[0] === 31 ? 'iv-perfect' : 'iv-exact') : 'iv-ambiguous';
+    if (ivs.length !== 1) allExact = false;
+    html += `<tr><td>${label}</td><td class="${cls}">${ivs.join(', ') || '—'}</td></tr>`;
+  }
+  html += '</tbody></table>';
+  el.innerHTML = html;
+
+  // Status
+  const statusEl = document.getElementById('iv-status');
+  const actionsEl = document.getElementById('iv-actions');
+  actionsEl.style.display = 'block';
+
+  if (r.exact) {
+    const ivStr = Object.values(r.exact_ivs).join('/');
+    statusEl.innerHTML = `<strong style="color:var(--green)">&#10003; IVs fully determined: ${ivStr}</strong>
+      <br><span style="color:var(--muted)">Ready to search for your SID!</span>`;
+    document.getElementById('find-sid-btn').disabled = false;
+  } else {
+    const ambiguous = statOrder.filter(([k]) => (r.possible_ivs[k]||[]).length > 1).map(([,l]) => l);
+    statusEl.innerHTML = `<strong style="color:var(--orange)">&#9888; ${ambiguous.join(', ')} still ambiguous</strong>
+      <br><span style="color:var(--muted)">Level up once more (with Rare Candy or track EVs) and add another stat row.</span>`;
+    document.getElementById('find-sid-btn').disabled = true;
+  }
+
+  switchTab('ivs');
+}
+
+function getStatRow(n) {
+  const hp = document.getElementById(`stat-hp-${n}`).value;
+  const atk = document.getElementById(`stat-atk-${n}`).value;
+  const def_ = document.getElementById(`stat-def-${n}`).value;
+  const spa = document.getElementById(`stat-spa-${n}`).value;
+  const spd = document.getElementById(`stat-spd-${n}`).value;
+  const spe = document.getElementById(`stat-spe-${n}`).value;
+  if (!hp || !atk || !def_ || !spa || !spd || !spe) return null;
+  return {hp:+hp, atk:+atk, def:+def_, spa:+spa, spd:+spd, spe:+spe};
+}
+
+// ── SID Search ──
+async function findSID() {
+  if (!lastIVResult || !lastIVResult.exact) { alert('IVs must be fully determined first'); return; }
+
+  const tid = parseInt(document.getElementById('pkmn-tid').value);
+  if (isNaN(tid) || tid < 0 || tid > 65535) { alert('Enter a valid TID (0-65535)'); return; }
+
+  const nature = document.getElementById('pkmn-nature').value;
+  const gender = document.getElementById('pkmn-gender').value || undefined;
+  const species = document.getElementById('pkmn-species').value;
+  const genderRatio = pokemonList[species]?.gender || '1:1';
+
+  const r = await api('find_sid', {
+    tid: tid,
+    ivs: lastIVResult.exact_ivs,
+    nature: nature,
+    gender: gender,
+    gender_ratio: genderRatio,
+  });
+
+  const el = document.getElementById('sid-results');
+  if (r.error) {
+    el.innerHTML = `<p style="color:var(--red)">${r.error}</p>`;
+    switchTab('sid');
+    return;
+  }
+
+  let html = '';
+  if (r.unique_sids.length === 0) {
+    html = '<p style="color:var(--red)">No matching PIDs found. Double-check your stats, nature, and EVs.</p>';
+  } else if (r.unique_sids.length <= 16) {
+    html = `<p style="margin-bottom:12px">Found <strong>${r.pid_candidates}</strong> matching PID(s), 
+      giving <strong>${r.sid_count}</strong> possible SID value(s):</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">`;
+    for (const sid of r.unique_sids) {
+      html += `<span class="sid-badge">${sid}</span>`;
+    }
+    html += '</div>';
+    html += `<p class="hint">To narrow down to a single SID, you can use RNG manipulation in 
+      Ten Lines — try each SID until a shiny target actually appears shiny in-game.</p>`;
+
+    // Show PID details
+    html += '<h2 style="margin-top:16px">PID Details</h2><table><thead><tr><th>PID</th><th>Nature</th><th>Possible SIDs</th></tr></thead><tbody>';
+    for (const res of r.results) {
+      html += `<tr>
+        <td style="font-family:monospace">${res.pid_hex}</td>
+        <td>${res.nature}</td>
+        <td>${res.sids.join(', ')}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+  } else {
+    html = `<p style="color:var(--orange)">Found ${r.sid_count} possible SIDs — too many to display. 
+      Try narrowing down IVs further by leveling up more.</p>`;
+  }
+
+  el.innerHTML = html;
+  switchTab('sid');
+}
+
+// ── Init ──
+init();
+</script>
+</body>
+</html>
