@@ -97,5 +97,8 @@ PokeBots/
 ## Acknowledgments
 
 - **Blissey** — FRLG Switch RNG manipulation tutorial and seed data
+- **YoggTwo** — Static RNG tutorial, RNG overview, and community discoveries
+- **Papa Jefe** — EonTimer overworld frame correction (574 frames for 1000 advances)
+- **Lincoln** — Ten Lines tool and SID calculation method
 - **Pico SDK** — Raspberry Pi Pico C/C++ SDK
 - **TinyUSB** — USB HID stack for the Pico
