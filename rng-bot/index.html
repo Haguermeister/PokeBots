@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>RNG Shiny Hunter</title>
+<style>
+  :root {
+    --bg: #0b0e14; --card: #14181f; --border: #2d3138;
+    --text: #f8f8f8; --muted: #8b949e; --accent: #58a6ff;
+    --shiny-gold: #ffd700; --shiny-bg: rgba(255,215,0,0.08);
+    --green: #3fb950; --red: #f85149; --orange: #f0883e;
+    --purple: #bc8cff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'SF Pro Text', sans-serif;
+    background: var(--bg); color: var(--text);
+    line-height: 1.5;
+  }
+  .container { max-width: 1100px; margin: 0 auto; padding: 16px; }
+  h1 { text-align: center; font-size: 1.4em; margin-bottom: 16px; }
+  h2 { font-size: 1em; color: var(--muted); text-transform: uppercase;
+       letter-spacing: 1px; margin-bottom: 10px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--card);
+          border-radius: 10px; padding: 4px; border: 1px solid var(--border); }
+  .tab { flex: 1; padding: 10px; text-align: center; border-radius: 8px;
+         cursor: pointer; font-weight: 600; font-size: 0.9em;
+         transition: background 0.15s; color: var(--muted); }
+  .tab.active { background: var(--accent); color: #fff; }
+  .tab:not(.active):hover { background: rgba(255,255,255,0.05); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--card); border: 1px solid var(--border);
+          border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+
+  /* Forms */
+  label { font-size: 0.85em; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-size: 1em; margin-bottom: 10px;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 12px; }
+  .row > * { flex: 1; }
+
+  /* Buttons */
+  button, .btn {
+    padding: 12px 20px; border: none; border-radius: 10px; font-size: 1em;
+    font-weight: 600; cursor: pointer; transition: transform 0.08s, opacity 0.08s;
+    display: inline-block; text-align: center;
+  }
+  button:active { transform: scale(0.95); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-warning { background: var(--orange); color: #111; }
+  .btn-shiny { background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+               color: #1a1a1a; }
+  .btn-sm { padding: 6px 14px; font-size: 0.85em; border-radius: 8px; }
+  .btn-block { width: 100%; }
+
+  /* Status bar */
+  .status-bar {
+    display: flex; gap: 12px; flex-wrap: wrap; padding: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 14px; font-size: 0.85em;
+  }
+  .status-item { display: flex; gap: 6px; align-items: center; }
+  .status-label { color: var(--muted); }
+  .status-value { font-weight: 600; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-green { background: var(--green); }
+  .dot-red { background: var(--red); }
+
+  /* Seed table */
+  .seed-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85em; }
+  th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600;
+       border-bottom: 2px solid var(--border); position: sticky; top: 0;
+       background: var(--card); }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  tr:hover { background: rgba(255,255,255,0.03); }
+  tr.shiny-row { background: var(--shiny-bg); }
+  tr.shiny-row:hover { background: rgba(255,215,0,0.15); }
+  tr.selected-row { background: rgba(88,166,255,0.15); outline: 2px solid var(--accent); }
+  .shiny-star { color: var(--shiny-gold); }
+  .nature-up { color: var(--red); }
+  .nature-down { color: var(--accent); }
+  .iv-perfect { color: var(--green); font-weight: 700; }
+  .iv-zero { color: var(--red); }
+  .pokemon-cell { display: flex; align-items: center; gap: 6px; }
+  .clickable { cursor: pointer; }
+
+  /* Pokemon detail */
+  .pkmn-detail {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+    font-size: 0.9em;
+  }
+  .pkmn-detail dt { color: var(--muted); }
+  .pkmn-detail dd { font-weight: 600; margin-bottom: 6px; }
+
+  /* Timer display */
+  .timer-display {
+    text-align: center; font-size: 3em; font-weight: 700;
+    font-family: 'SF Mono', monospace; padding: 20px;
+    color: var(--accent); letter-spacing: 2px;
+  }
+  .timer-phases { display: flex; gap: 10px; margin-top: 12px; }
+  .timer-phase {
+    flex: 1; text-align: center; padding: 10px; border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .timer-phase.active { border-color: var(--accent); background: rgba(88,166,255,0.1); }
+  .timer-phase .phase-label { font-size: 0.75em; color: var(--muted); }
+  .timer-phase .phase-time { font-size: 1.1em; font-weight: 700; font-family: monospace; }
+
+  /* Log */
+  .log {
+    background: var(--bg); border-radius: 8px; padding: 10px;
+    font-family: 'SF Mono', monospace; font-size: 0.8em;
+    max-height: 200px; overflow-y: auto; white-space: pre-wrap;
+    border: 1px solid var(--border); color: var(--muted);
+  }
+
+  /* Pagination */
+  .pagination { display: flex; gap: 6px; justify-content: center;
+                margin-top: 12px; align-items: center; }
+  .pagination button { padding: 6px 12px; }
+  .page-info { color: var(--muted); font-size: 0.85em; }
+
+  /* Responsive */
+  @media (max-width: 600px) {
+    .row { flex-direction: column; gap: 0; }
+    .pkmn-detail { grid-template-columns: 1fr; }
+    .timer-phases { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>&#10024; RNG Shiny Hunter</h1>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="status-item">
+      <div class="dot" id="pico-dot"></div>
+      <span class="status-label">Pico</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">TID:</span>
+      <span class="status-value" id="st-tid">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">SID:</span>
+      <span class="status-value" id="st-sid">—</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Target:</span>
+      <span class="status-value" id="st-target">None</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">Attempts:</span>
+      <span class="status-value" id="st-attempts">0</span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('setup')">Setup</div>
+    <div class="tab" onclick="switchTab('seeds')">Seeds</div>
+    <div class="tab" onclick="switchTab('shinies')">Shinies</div>
+    <div class="tab" onclick="switchTab('timer')">Timer</div>
+    <div class="tab" onclick="switchTab('calibrate')">Calibrate</div>
+    <div class="tab" onclick="switchTab('controls')">Controls</div>
+  </div>
+
+  <!-- ═══ SETUP TAB ═══ -->
+  <div class="panel active" id="panel-setup">
+    <div class="card">
+      <h2>Trainer ID</h2>
+      <p style="font-size:0.85em;color:var(--muted);margin-bottom:12px">
+        Auto-detect reads your TID from the trainer card screen and computes your SID
+        from the FRLG RNG. Or enter TID manually and we'll compute SID for you.
+      </p>
+      <div style="margin-bottom:12px">
+        <button class="btn-shiny btn-block" onclick="autoDetectTID()">Auto-Detect TID &amp; SID from Screen</button>
+      </div>
+      <div id="detect-status" style="display:none;padding:10px;border-radius:8px;border:1px solid var(--border);margin-bottom:12px;font-size:0.85em"></div>
+      <div class="row">
+        <div>
+          <label>TID (0–65535)</label>
+          <input type="number" id="input-tid" min="0" max="65535" placeholder="e.g. 12345">
+        </div>
+        <div>
+          <label>SID (0–65535)</label>
+          <input type="number" id="input-sid" min="0" max="65535" placeholder="auto-computed">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="computeSID()">Compute SID from TID</button>
+        <button class="btn-primary" onclick="saveTID()">Save (Manual Entry)</button>
+      </div>
+      <div id="sid-candidates" style="display:none;margin-top:10px;font-size:0.85em;color:var(--muted)"></div>
+    </div>
+
+    <div class="card">
+      <h2>Pokemon</h2>
+      <label>Starter</label>
+      <select id="input-pokemon" onchange="updatePokemon()">
+        <option value="Bulbasaur">Bulbasaur</option>
+        <option value="Charmander">Charmander</option>
+        <option value="Squirtle">Squirtle</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <h2>Advance Range</h2>
+      <p style="font-size:0.85em;color:var(--muted);margin-bottom:12px">
+        Search range for shiny frames. Default 1000–100000 covers ~17s to ~28min of overworld RNG.
+        The Eon Timer default target is around 1500 advances.
+      </p>
+      <div class="row">
+        <div>
+          <label>Min Advance</label>
+          <input type="number" id="input-min-adv" value="1000" min="0">
+        </div>
+        <div>
+          <label>Max Advance</label>
+          <input type="number" id="input-max-adv" value="100000" min="1">
+        </div>
+      </div>
+      <button class="btn-primary btn-block" onclick="saveRange()">Update Range</button>
+    </div>
+
+    <div class="card">
+      <h2>Calibration</h2>
+      <div class="row">
+        <div>
+          <label>Timer Offset (ms) — NX=0, NX2=-750</label>
+          <input type="number" id="input-timer-offset" value="0" step="1">
+        </div>
+        <div>
+          <label>Calibration Offset (ms)</label>
+          <input type="number" id="input-cal-offset" value="0" step="0.1">
+        </div>
+      </div>
+      <button class="btn-primary btn-block" onclick="saveCalibration()">Save Calibration</button>
+    </div>
+
+    <div class="card">
+      <h2>Seed Data</h2>
+      <p style="font-size:0.85em;color:var(--muted);margin-bottom:12px">
+        Seed data is auto-cached locally. Re-download to refresh from Google Sheets.
+      </p>
+      <div class="row">
+        <button class="btn-warning" onclick="refreshSeeds()" style="flex:1">Re-download Seeds</button>
+        <div class="status-item" style="flex:1;justify-content:center">
+          <span class="status-label">Cached:</span>
+          <span class="status-value" id="seed-count">—</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SEEDS TAB ═══ -->
+  <div class="panel" id="panel-seeds">
+    <div class="card">
+      <h2>Initial Seeds</h2>
+      <p style="font-size:0.85em;color:var(--muted);margin-bottom:12px">
+        Each row is a possible initial seed your game can land on at boot.
+        The frame number determines the boot timing. Click a seed to see its shiny frames.
+      </p>
+      <div class="row" style="margin-bottom:12px">
+        <div>
+          <label>Filter by Seed (hex)</label>
+          <input type="text" id="seed-filter" placeholder="e.g. 1A2B" oninput="filterSeeds()">
+        </div>
+        <div>
+          <label>Show seeds with shinies in range</label>
+          <select id="seed-shiny-filter" onchange="filterSeeds()">
+            <option value="all">All Seeds</option>
+            <option value="has_shinies">With Shinies Only</option>
+          </select>
+        </div>
+      </div>
+      <div id="seed-loading" style="text-align:center;padding:20px;color:var(--muted)">
+        Loading seeds...
+      </div>
+      <div class="seed-table-wrap" id="seed-table-wrap" style="display:none;max-height:500px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Seed</th>
+              <th>Frame</th>
+              <th>Time (ms)</th>
+              <th>Shinies</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="seed-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button class="btn-sm btn-primary" onclick="seedPage(-1)">◀ Prev</button>
+        <span class="page-info" id="seed-page-info">1 / 1</span>
+        <button class="btn-sm btn-primary" onclick="seedPage(1)">Next ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SHINIES TAB ═══ -->
+  <div class="panel" id="panel-shinies">
+    <div class="card">
+      <h2>Shiny Pokemon for Seed</h2>
+      <div id="no-seed-msg" style="color:var(--muted);text-align:center;padding:20px">
+        Select a seed from the Seeds tab first.
+      </div>
+      <div id="shiny-content" style="display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div>
+            <span style="color:var(--muted)">Seed:</span>
+            <span id="shiny-seed-hex" style="font-weight:700;font-family:monospace"></span>
+            <span style="color:var(--muted);margin-left:12px">Frame:</span>
+            <span id="shiny-seed-frame" style="font-weight:700"></span>
+          </div>
+          <div>
+            <label style="display:inline;margin-right:8px">Pokemon:</label>
+            <select id="shiny-pokemon-select" onchange="loadShinies()" style="width:auto;display:inline;margin-bottom:0">
+              <option value="Bulbasaur">Bulbasaur</option>
+              <option value="Charmander">Charmander</option>
+              <option value="Squirtle">Squirtle</option>
+            </select>
+          </div>
+        </div>
+        <div id="shiny-loading" style="text-align:center;padding:20px;color:var(--muted);display:none">
+          Searching for shinies...
+        </div>
+        <div class="seed-table-wrap" id="shiny-table-wrap" style="max-height:500px;overflow-y:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Advance</th>
+                <th>PID</th>
+                <th>Nature</th>
+                <th>IVs (HP/Atk/Def/SpA/SpD/Spe)</th>
+                <th>Gender</th>
+                <th>Ability</th>
+                <th>HP Type</th>
+                <th>Stats</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="shiny-tbody"></tbody>
+          </table>
+        </div>
+        <div id="shiny-count" style="text-align:center;margin-top:10px;color:var(--muted);font-size:0.85em"></div>
+      </div>
+    </div>
+
+    <!-- Selected target detail -->
+    <div class="card" id="target-card" style="display:none;border-color:var(--shiny-gold)">
+      <h2 style="color:var(--shiny-gold)">★ Selected Target</h2>
+      <div class="pkmn-detail" id="target-detail"></div>
+      <div style="margin-top:14px;display:flex;gap:10px">
+        <button class="btn-shiny" style="flex:1" onclick="lockTarget()">Lock Target & Go to Timer</button>
+        <button class="btn-danger btn-sm" onclick="clearTarget()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TIMER TAB ═══ -->
+  <div class="panel" id="panel-timer">
+    <div class="card">
+      <h2>RNG Timer</h2>
+      <div id="no-target-msg" style="color:var(--muted);text-align:center;padding:20px">
+        Select a target shiny from the Shinies tab first.
+      </div>
+      <div id="timer-content" style="display:none">
+        <div style="text-align:center;margin-bottom:12px">
+          <span style="color:var(--muted)">Target:</span>
+          <span id="timer-target-name" style="font-weight:700"></span>
+          <span style="color:var(--muted);margin-left:12px">Seed:</span>
+          <span id="timer-seed" style="font-family:monospace;font-weight:700"></span>
+          <span style="color:var(--muted);margin-left:12px">Advance:</span>
+          <span id="timer-advance" style="font-weight:700"></span>
+        </div>
+        <div class="timer-display" id="timer-display">00:00.000</div>
+        <div class="timer-phases" id="timer-phases">
+          <div class="timer-phase" id="phase-1">
+            <div class="phase-label">Phase 1: Boot</div>
+            <div class="phase-time" id="phase1-time">—</div>
+            <div class="phase-label" style="font-size:0.7em">Launch → Home</div>
+          </div>
+          <div class="timer-phase" id="phase-2">
+            <div class="phase-label">Phase 2: Intro</div>
+            <div class="phase-time" id="phase2-time">—</div>
+            <div class="phase-label" style="font-size:0.7em">Home → Continue</div>
+          </div>
+          <div class="timer-phase" id="phase-3">
+            <div class="phase-label">Phase 3: Overworld</div>
+            <div class="phase-time" id="phase3-time">—</div>
+            <div class="phase-label" style="font-size:0.7em">Continue → Starter</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+          <button class="btn-success" style="flex:1" id="timer-start-btn" onclick="startTimer()">Start Timer</button>
+          <button class="btn-danger" style="flex:1" onclick="resetTimer()">Reset</button>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:10px">
+          <button class="btn-shiny" style="flex:1" onclick="startAutomation()">Start Automated Run</button>
+          <button class="btn-danger" style="flex:1" onclick="stopAutomation()">Stop Bot</button>
+        </div>
+        <div id="bot-status-bar" style="margin-top:12px;padding:12px;border-radius:8px;border:1px solid var(--border);display:none">
+          <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+            <span style="font-weight:600" id="bot-status-text">—</span>
+            <span style="color:var(--muted);font-size:0.85em" id="bot-attempt-text">—</span>
+          </div>
+          <div style="color:var(--muted);font-size:0.85em" id="bot-phase-text">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Log</h2>
+      <div class="log" id="timer-log"></div>
+    </div>
+  </div>
+
+  <!-- ═══ CALIBRATE TAB ═══ -->
+  <div class="panel" id="panel-calibrate">
+    <div class="card">
+      <h2>Calibration — Enter Observed Pokemon</h2>
+      <p style="font-size:0.85em;color:var(--muted);margin-bottom:12px">
+        After an RNG attempt, check your Pokemon's summary screen and enter what you see.
+        We'll figure out what advance you actually hit and adjust the timer.
+      </p>
+      <div class="row">
+        <div>
+          <label>Pokemon</label>
+          <select id="cal-pokemon">
+            <option value="Bulbasaur">Bulbasaur</option>
+            <option value="Charmander">Charmander</option>
+            <option value="Squirtle">Squirtle</option>
+          </select>
+        </div>
+        <div>
+          <label>Observed Nature</label>
+          <select id="cal-nature">
+            <option value="">— Select —</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Observed Gender</label>
+          <select id="cal-gender">
+            <option value="">— Any —</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+        <div>
+          <label>Search Range (±advances)</label>
+          <input type="number" id="cal-range" value="500" min="10" max="10000">
+        </div>
+      </div>
+      <h2 style="margin-top:12px">Observed Stats (optional, improves accuracy)</h2>
+      <div class="row">
+        <div><label>HP</label><input type="number" id="cal-hp" min="1" placeholder="—"></div>
+        <div><label>Atk</label><input type="number" id="cal-atk" min="1" placeholder="—"></div>
+        <div><label>Def</label><input type="number" id="cal-def" min="1" placeholder="—"></div>
+      </div>
+      <div class="row">
+        <div><label>SpA</label><input type="number" id="cal-spa" min="1" placeholder="—"></div>
+        <div><label>SpD</label><input type="number" id="cal-spd" min="1" placeholder="—"></div>
+        <div><label>Spe</label><input type="number" id="cal-spe" min="1" placeholder="—"></div>
+      </div>
+      <button class="btn-primary btn-block" style="margin-top:12px" onclick="runCalibration()">Find My Advance</button>
+    </div>
+
+    <div class="card" id="cal-results-card" style="display:none">
+      <h2>Calibration Results</h2>
+      <div class="seed-table-wrap" style="max-height:400px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Advance</th>
+              <th>Offset</th>
+              <th>Nature</th>
+              <th>IVs</th>
+              <th>Stats</th>
+              <th>Shiny</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cal-tbody"></tbody>
+        </table>
+      </div>
+      <div id="cal-summary" style="margin-top:12px;padding:12px;border-radius:8px;border:1px solid var(--border)"></div>
+    </div>
+  </div>
+
+  <!-- ═══ CONTROLS TAB ═══ -->
+  <div class="panel" id="panel-controls">
+    <div class="card">
+      <h2>Manual Buttons</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <button style="background:#5ecf62;color:#111;padding:18px" onclick="press('A')">A</button>
+        <button style="background:#e60012;color:#fff;padding:18px" onclick="press('B')">B</button>
+        <button style="background:#00b8f0;color:#07253a;padding:18px" onclick="press('X')">X</button>
+        <button style="background:#f1c40f;color:#111;padding:18px" onclick="press('Y')">Y</button>
+        <button style="background:#8e44ad;color:#fff;padding:18px" onclick="press('START')">+</button>
+        <button style="background:#2d98da;color:#fff;padding:18px" onclick="press('HOME')">Home</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px">
+        <div></div>
+        <button style="background:#5f6b7a;color:#fff;padding:14px" onclick="press('DU')">▲</button>
+        <div></div>
+        <button style="background:#5f6b7a;color:#fff;padding:14px" onclick="press('DL')">◀</button>
+        <button style="background:#5f6b7a;color:#fff;padding:14px" onclick="press('DD')">▼</button>
+        <button style="background:#5f6b7a;color:#fff;padding:14px" onclick="press('DR')">▶</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Sequences</h2>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn-primary btn-block" onclick="runSequence('soft_reset')">Soft Reset</button>
+        <button class="btn-warning btn-block" onclick="runSequence('check_starter')">Check Starter</button>
+        <button class="btn-success btn-block" onclick="runSequence('save_game')">Save Game</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Log</h2>
+      <div class="log" id="ctrl-log"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let currentTab = 'setup';
+let stateData = {};
+let allSeeds = [];
+let filteredSeeds = [];
+let seedPageNum = 0;
+const SEEDS_PER_PAGE = 50;
+let currentShinies = [];
+let selectedTarget = null;
+let timerInterval = null;
+let timerPhase = 0;
+let timerStart = 0;
+let phaseTimesMs = [0, 0, 0];
+
+// ── Tab switching ──
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.tab[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  currentTab = name;
+  if (name === 'seeds' && allSeeds.length === 0) loadSeeds();
+}
+
+// ── API helpers ──
+async function api(endpoint, data) {
+  const res = await fetch('/api/' + endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data || {}),
+  });
+  return res.json();
+}
+
+async function press(btn) {
+  const r = await api('press', {button: btn});
+  addLog('ctrl-log', r.msg || r.error);
+}
+
+async function runSequence(seq) {
+  const r = await api('sequence', {name: seq});
+  addLog('ctrl-log', r.msg || r.error);
+}
+
+function addLog(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const t = new Date().toLocaleTimeString();
+  el.textContent += t + ' ' + msg + '\n';
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Setup ──
+async function loadStatus() {
+  const r = await api('status');
+  stateData = r;
+  document.getElementById('st-tid').textContent = r.tid_set ? r.tid : '—';
+  document.getElementById('st-sid').textContent = r.tid_set ? r.sid : '—';
+  document.getElementById('st-attempts').textContent = r.attempts || 0;
+  document.getElementById('seed-count').textContent = (r.seed_count || 0) + ' seeds';
+  document.getElementById('pico-dot').className = 'dot ' + (r.pico_ok ? 'dot-green' : 'dot-red');
+
+  if (r.target_pokemon) {
+    const t = r.target_pokemon;
+    document.getElementById('st-target').textContent =
+      `${t.pokemon} @ adv ${t.advance} (${t.nature})`;
+  } else {
+    document.getElementById('st-target').textContent = 'None';
+  }
+
+  // Populate form fields
+  if (r.tid_set) {
+    document.getElementById('input-tid').value = r.tid;
+    document.getElementById('input-sid').value = r.sid;
+  }
+  document.getElementById('input-pokemon').value = r.selected_pokemon || 'Bulbasaur';
+  document.getElementById('input-min-adv').value = r.min_advance || 1000;
+  document.getElementById('input-max-adv').value = r.max_advance || 100000;
+  document.getElementById('input-timer-offset').value = r.timer_offset_ms || 0;
+  document.getElementById('input-cal-offset').value = r.calibration_offset_ms || 0;
+}
+
+async function saveTID() {
+  const tid = parseInt(document.getElementById('input-tid').value) || 0;
+  const sid = parseInt(document.getElementById('input-sid').value) || 0;
+  const r = await api('set_tid', {tid, sid});
+  addLog('ctrl-log', r.msg || 'TID/SID saved');
+  loadStatus();
+}
+
+async function autoDetectTID() {
+  const statusEl = document.getElementById('detect-status');
+  statusEl.style.display = 'block';
+  statusEl.style.borderColor = 'var(--accent)';
+  statusEl.textContent = 'Navigating to trainer card and reading screen...';
+
+  const r = await api('auto_detect_tid');
+  if (r.status === 'success' || r.status === 'success_multiple') {
+    statusEl.style.borderColor = 'var(--green)';
+    statusEl.innerHTML = '<strong style="color:var(--green)">✓ ' + r.message + '</strong>';
+    document.getElementById('input-tid').value = r.tid;
+    document.getElementById('input-sid').value = r.sid;
+    if (r.sid_candidates && r.sid_candidates.length > 1) {
+      showSIDCandidates(r.sid_candidates);
+    }
+    loadStatus();
+  } else {
+    statusEl.style.borderColor = 'var(--orange)';
+    statusEl.innerHTML = '<strong style="color:var(--orange)">⚠ ' + r.message + '</strong><br>' +
+      'Enter your TID manually below and click "Compute SID from TID".';
+  }
+}
+
+async function computeSID() {
+  const tid = parseInt(document.getElementById('input-tid').value);
+  if (isNaN(tid) || tid < 0 || tid > 65535) {
+    alert('Enter a valid TID (0-65535) first');
+    return;
+  }
+  const r = await api('compute_sid', {tid});
+  if (r.error) {
+    alert(r.error);
+    return;
+  }
+  document.getElementById('input-sid').value = r.sid;
+  const statusEl = document.getElementById('detect-status');
+  statusEl.style.display = 'block';
+  statusEl.style.borderColor = 'var(--green)';
+  statusEl.innerHTML = '<strong style="color:var(--green)">✓ ' + r.msg + '</strong>';
+  if (r.candidates && r.candidates.length > 1) {
+    showSIDCandidates(r.candidates);
+  }
+  loadStatus();
+}
+
+function showSIDCandidates(candidates) {
+  const el = document.getElementById('sid-candidates');
+  el.style.display = 'block';
+  let html = '<strong>All SID candidates:</strong><br>';
+  for (const c of candidates) {
+    html += `SID=${c.sid} (advance ${c.advance}) `;
+    html += `<button class="btn-sm btn-primary" style="padding:2px 8px;font-size:0.75em" `;
+    html += `onclick="document.getElementById('input-sid').value=${c.sid};saveTID()">Use</button> `;
+  }
+  html += '<br><em>If your first shiny attempt fails, try a different SID candidate.</em>';
+  el.innerHTML = html;
+}
+
+async function updatePokemon() {
+  const p = document.getElementById('input-pokemon').value;
+  await api('set_pokemon', {pokemon: p});
+  loadStatus();
+}
+
+async function saveRange() {
+  const min = parseInt(document.getElementById('input-min-adv').value) || 1000;
+  const max = parseInt(document.getElementById('input-max-adv').value) || 100000;
+  await api('set_range', {min_advance: min, max_advance: max});
+  loadStatus();
+}
+
+async function saveCalibration() {
+  const to = parseFloat(document.getElementById('input-timer-offset').value) || 0;
+  const co = parseFloat(document.getElementById('input-cal-offset').value) || 0;
+  await api('set_calibration', {timer_offset_ms: to, calibration_offset_ms: co});
+  loadStatus();
+}
+
+async function refreshSeeds() {
+  const r = await api('refresh_seeds');
+  addLog('ctrl-log', r.msg || 'Seeds refreshed');
+  allSeeds = [];
+  loadStatus();
+  if (currentTab === 'seeds') loadSeeds();
+}
+
+// ── Seeds Tab ──
+async function loadSeeds() {
+  document.getElementById('seed-loading').style.display = 'block';
+  document.getElementById('seed-table-wrap').style.display = 'none';
+  const r = await api('get_seeds');
+  allSeeds = r.seeds || [];
+  document.getElementById('seed-loading').style.display = 'none';
+  document.getElementById('seed-table-wrap').style.display = 'block';
+  filterSeeds();
+  // If still computing, poll again in a few seconds
+  if (r.computing) {
+    document.getElementById('seed-page-info').textContent += ' (computing shinies...)';
+    setTimeout(loadSeeds, 3000);
+  }
+}
+
+function filterSeeds() {
+  const hex = document.getElementById('seed-filter').value.trim().toUpperCase();
+  const shinyFilter = document.getElementById('seed-shiny-filter').value;
+
+  filteredSeeds = allSeeds;
+  if (hex) {
+    filteredSeeds = filteredSeeds.filter(s => s.seed_hex.includes(hex));
+  }
+  if (shinyFilter === 'has_shinies') {
+    filteredSeeds = filteredSeeds.filter(s => s.shiny_count > 0);
+  }
+  seedPageNum = 0;
+  renderSeedPage();
+}
+
+function renderSeedPage() {
+  const start = seedPageNum * SEEDS_PER_PAGE;
+  const end = Math.min(start + SEEDS_PER_PAGE, filteredSeeds.length);
+  const page = filteredSeeds.slice(start, end);
+  const total = Math.max(1, Math.ceil(filteredSeeds.length / SEEDS_PER_PAGE));
+
+  document.getElementById('seed-page-info').textContent =
+    `${seedPageNum + 1} / ${total} (${filteredSeeds.length} seeds)`;
+
+  const tbody = document.getElementById('seed-tbody');
+  tbody.innerHTML = '';
+  for (const s of page) {
+    const tr = document.createElement('tr');
+    tr.className = 'clickable' + (s.shiny_count > 0 ? ' shiny-row' : '');
+    tr.onclick = () => selectSeed(s.seed_hex, s.seed_frame);
+    tr.innerHTML = `
+      <td style="font-family:monospace;font-weight:600">${s.seed_hex}</td>
+      <td>${s.seed_frame}</td>
+      <td>${s.time_ms.toFixed(1)}</td>
+      <td>${s.shiny_count > 0 ? '<span class="shiny-star">★ ' + s.shiny_count + '</span>' : '0'}</td>
+      <td><button class="btn-sm btn-primary" onclick="event.stopPropagation();selectSeed('${s.seed_hex}',${s.seed_frame})">View</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function seedPage(delta) {
+  const total = Math.max(1, Math.ceil(filteredSeeds.length / SEEDS_PER_PAGE));
+  seedPageNum = Math.max(0, Math.min(total - 1, seedPageNum + delta));
+  renderSeedPage();
+}
+
+async function selectSeed(hex, frame) {
+  await api('select_seed', {seed_hex: hex, seed_frame: frame});
+  // Switch to shinies tab
+  switchTab('shinies');
+  document.getElementById('no-seed-msg').style.display = 'none';
+  document.getElementById('shiny-content').style.display = 'block';
+  document.getElementById('shiny-seed-hex').textContent = hex;
+  document.getElementById('shiny-seed-frame').textContent = frame;
+  document.getElementById('shiny-pokemon-select').value =
+    document.getElementById('input-pokemon').value;
+  loadShinies();
+}
+
+// ── Shinies Tab ──
+async function loadShinies() {
+  document.getElementById('shiny-loading').style.display = 'block';
+  const pokemon = document.getElementById('shiny-pokemon-select').value;
+  const r = await api('get_shinies', {pokemon: pokemon});
+  document.getElementById('shiny-loading').style.display = 'none';
+  currentShinies = r.shinies || [];
+  document.getElementById('shiny-count').textContent =
+    `Found ${currentShinies.length} shiny frames in range ${r.min_advance}–${r.max_advance}`;
+  renderShinies();
+}
+
+function renderShinies() {
+  const tbody = document.getElementById('shiny-tbody');
+  tbody.innerHTML = '';
+  for (const s of currentShinies) {
+    const iv = s.ivs;
+    const ivStr = [iv.hp, iv.atk, iv.def, iv.spa, iv.spd, iv.spe]
+      .map(v => `<span class="${v===31?'iv-perfect':v===0?'iv-zero':''}">${v}</span>`)
+      .join('/');
+
+    const tr = document.createElement('tr');
+    tr.className = 'shiny-row clickable';
+    tr.onclick = () => selectShiny(s);
+    tr.innerHTML = `
+      <td style="font-weight:700">${s.advance}</td>
+      <td style="font-family:monospace;font-size:0.8em">${s.pid_hex}</td>
+      <td>${formatNature(s)}</td>
+      <td>${ivStr} <span style="color:var(--muted);font-size:0.8em">(${s.iv_sum})</span></td>
+      <td>${s.gender}</td>
+      <td>${s.ability_name}</td>
+      <td>${s.hp_type} ${s.hp_power}</td>
+      <td style="font-size:0.8em">${formatStats(s.stats)}</td>
+      <td><button class="btn-sm btn-shiny" onclick="event.stopPropagation();selectShiny(${JSON.stringify(s).replace(/"/g,'&quot;')})">Select</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function formatNature(s) {
+  const mods = getNatureMods(s.nature_id);
+  if (!mods) return s.nature;
+  return `${s.nature} <span class="nature-up">+${mods[0]}</span> <span class="nature-down">-${mods[1]}</span>`;
+}
+
+function getNatureMods(nid) {
+  const stats = ['Atk','Def','Spe','SpA','SpD'];
+  const up = Math.floor(nid / 5);
+  const down = nid % 5;
+  if (up === down) return null;
+  return [stats[up], stats[down]];
+}
+
+function formatStats(stats) {
+  return `${stats.hp}/${stats.atk}/${stats.def}/${stats.spa}/${stats.spd}/${stats.spe}`;
+}
+
+function selectShiny(s) {
+  selectedTarget = s;
+  document.getElementById('target-card').style.display = 'block';
+  const d = document.getElementById('target-detail');
+  d.innerHTML = `
+    <div><dt>Pokemon</dt><dd>${s.pokemon}</dd></div>
+    <div><dt>Nature</dt><dd>${formatNature(s)}</dd></div>
+    <div><dt>PID</dt><dd style="font-family:monospace">${s.pid_hex}</dd></div>
+    <div><dt>Advance</dt><dd>${s.advance}</dd></div>
+    <div><dt>IVs</dt><dd>${s.ivs.hp}/${s.ivs.atk}/${s.ivs.def}/${s.ivs.spa}/${s.ivs.spd}/${s.ivs.spe} (${s.iv_sum})</dd></div>
+    <div><dt>Stats</dt><dd>${formatStats(s.stats)}</dd></div>
+    <div><dt>Gender</dt><dd>${s.gender}</dd></div>
+    <div><dt>Ability</dt><dd>${s.ability_name}</dd></div>
+    <div><dt>Hidden Power</dt><dd>${s.hp_type} ${s.hp_power}</dd></div>
+    <div><dt>Shiny Type</dt><dd>${s.square ? '■ Square' : '★ Star'}</dd></div>
+  `;
+}
+
+async function lockTarget() {
+  if (!selectedTarget) return;
+  await api('lock_target', {target: selectedTarget});
+  addLog('timer-log', 'Target locked: ' + selectedTarget.pokemon + ' @ advance ' + selectedTarget.advance);
+  loadStatus();
+  switchTab('timer');
+  setupTimer();
+}
+
+function clearTarget() {
+  selectedTarget = null;
+  document.getElementById('target-card').style.display = 'none';
+}
+
+// ── Timer Tab ──
+function setupTimer() {
+  if (!stateData.target_pokemon) {
+    document.getElementById('no-target-msg').style.display = 'block';
+    document.getElementById('timer-content').style.display = 'none';
+    return;
+  }
+  document.getElementById('no-target-msg').style.display = 'none';
+  document.getElementById('timer-content').style.display = 'block';
+
+  const t = stateData.target_pokemon;
+  document.getElementById('timer-target-name').textContent = t.pokemon;
+  document.getElementById('timer-seed').textContent = stateData.selected_seed;
+  document.getElementById('timer-advance').textContent = t.advance;
+
+  // Calculate timer phases
+  calcTimerPhases();
+}
+
+function calcTimerPhases() {
+  // Phase 1: Boot timing — time from game launch to Home press
+  //   Based on seed_frame: the target initial seed frame determines boot timing
+  const seedFrame = stateData.selected_seed_frame || 0;
+  const frameRate = 16777216 / 280896;  // NX framerate
+  const seedTimeMs = (seedFrame / frameRate) * 1000;
+  const timerOffset = stateData.timer_offset_ms || 0;
+  const calOffset = stateData.calibration_offset_ms || 0;
+
+  // Phase 1: seed timing (boot → home, so the game starts RNG at right seed)
+  phaseTimesMs[0] = seedTimeMs + timerOffset + calOffset;
+
+  // Phase 2: intro animation (Home → Continue screen A press)
+  //   This is relatively fixed — the GBA intro + title screen
+  //   ~5000ms is typical but varies with player input timing
+  phaseTimesMs[1] = 5000;
+
+  // Phase 3: overworld advances (Continue → starter receive)
+  //   target_advance / 2 frames at overworld (2x speed) → convert to ms
+  //   Plus the English advance offset (249)
+  const targetAdv = (stateData.target_pokemon?.advance || 1500);
+  const totalAdv = targetAdv + 249;  // English offset
+  const overworldFrames = totalAdv / 2;  // 2x speed in overworld
+  phaseTimesMs[2] = (overworldFrames / frameRate) * 1000;
+
+  document.getElementById('phase1-time').textContent = formatMs(phaseTimesMs[0]);
+  document.getElementById('phase2-time').textContent = formatMs(phaseTimesMs[1]);
+  document.getElementById('phase3-time').textContent = formatMs(phaseTimesMs[2]);
+}
+
+function formatMs(ms) {
+  const totalSec = Math.abs(ms) / 1000;
+  const min = Math.floor(totalSec / 60);
+  const sec = totalSec % 60;
+  return `${min}:${sec.toFixed(3).padStart(6,'0')}`;
+}
+
+function startTimer() {
+  if (timerInterval) { resetTimer(); return; }
+  timerPhase = 0;
+  timerStart = performance.now();
+  updatePhaseUI();
+  document.getElementById('timer-start-btn').textContent = 'Running...';
+  document.getElementById('timer-start-btn').className = 'btn-warning';
+  timerInterval = setInterval(updateTimer, 16);
+  addLog('timer-log', 'Timer started — Phase 1');
+}
+
+function updateTimer() {
+  const elapsed = performance.now() - timerStart;
+  const phaseTarget = phaseTimesMs[timerPhase];
+  const remaining = phaseTarget - elapsed;
+
+  if (remaining <= 0) {
+    // Phase complete
+    addLog('timer-log', `Phase ${timerPhase + 1} complete`);
+    if (timerPhase < 2) {
+      timerPhase++;
+      timerStart = performance.now();
+      updatePhaseUI();
+      addLog('timer-log', `Phase ${timerPhase + 1} started`);
+      // Visual flash
+      document.getElementById('timer-display').style.color = '#3fb950';
+      setTimeout(() => document.getElementById('timer-display').style.color = 'var(--accent)', 200);
+    } else {
+      // All phases done
+      resetTimer();
+      document.getElementById('timer-display').style.color = 'var(--shiny-gold)';
+      document.getElementById('timer-display').textContent = 'DONE!';
+      addLog('timer-log', 'All phases complete — press A now!');
+    }
+    return;
+  }
+
+  document.getElementById('timer-display').textContent = formatMs(remaining);
+}
+
+function updatePhaseUI() {
+  document.querySelectorAll('.timer-phase').forEach((el, i) => {
+    el.classList.toggle('active', i === timerPhase);
+  });
+}
+
+function resetTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+  timerPhase = 0;
+  document.getElementById('timer-display').textContent = '00:00.000';
+  document.getElementById('timer-display').style.color = 'var(--accent)';
+  document.getElementById('timer-start-btn').textContent = 'Start Timer';
+  document.getElementById('timer-start-btn').className = 'btn-success';
+  updatePhaseUI();
+}
+
+async function startAutomation() {
+  const r = await api('start_automation');
+  addLog('timer-log', r.msg || r.error || 'Automation started');
+  loadStatus();
+  pollBotStatus();
+}
+
+async function stopAutomation() {
+  const r = await api('stop_automation');
+  addLog('timer-log', r.msg || r.error || 'Stop requested');
+  loadStatus();
+}
+
+let botPollInterval = null;
+async function pollBotStatus() {
+  if (botPollInterval) clearInterval(botPollInterval);
+  botPollInterval = setInterval(async () => {
+    const r = await api('bot_status');
+    const bar = document.getElementById('bot-status-bar');
+    if (r.running || r.state) {
+      bar.style.display = 'block';
+      const stateText = r.state === 'success' ? 'SUCCESS!' :
+                        r.state === 'stopped' ? 'Stopped' :
+                        r.running ? 'Running' : 'Idle';
+      const color = r.state === 'success' ? 'var(--shiny-gold)' :
+                    r.running ? 'var(--green)' : 'var(--muted)';
+      document.getElementById('bot-status-text').textContent = stateText;
+      document.getElementById('bot-status-text').style.color = color;
+      document.getElementById('bot-attempt-text').textContent =
+        r.attempt ? `Attempt #${r.attempt}` : '';
+      document.getElementById('bot-phase-text').textContent =
+        r.phase ? `Phase: ${r.phase}` : '';
+
+      // Fetch and display recent log
+      const logR = await api('bot_log', {lines: 20});
+      if (logR.log) {
+        const logEl = document.getElementById('timer-log');
+        logEl.textContent = logR.log;
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      if (!r.running && r.state !== 'running') {
+        clearInterval(botPollInterval);
+        botPollInterval = null;
+      }
+    }
+  }, 2000);
+}
+
+// ── Calibration Tab ──
+const NATURES = [
+  'Hardy','Lonely','Brave','Adamant','Naughty','Bold','Docile','Relaxed',
+  'Impish','Lax','Timid','Hasty','Serious','Jolly','Naive','Modest','Mild',
+  'Quiet','Bashful','Rash','Calm','Gentle','Sassy','Careful','Quirky'
+];
+
+function initNatureDropdown() {
+  const sel = document.getElementById('cal-nature');
+  for (const n of NATURES) {
+    const opt = document.createElement('option');
+    opt.value = n; opt.textContent = n;
+    sel.appendChild(opt);
+  }
+}
+
+async function runCalibration() {
+  const nature = document.getElementById('cal-nature').value || undefined;
+  const gender = document.getElementById('cal-gender').value || undefined;
+  const pokemon = document.getElementById('cal-pokemon').value;
+  const range = parseInt(document.getElementById('cal-range').value) || 500;
+
+  // Collect stats if provided
+  let stats = undefined;
+  const hp = document.getElementById('cal-hp').value;
+  const atk = document.getElementById('cal-atk').value;
+  const def_ = document.getElementById('cal-def').value;
+  const spa = document.getElementById('cal-spa').value;
+  const spd = document.getElementById('cal-spd').value;
+  const spe = document.getElementById('cal-spe').value;
+  if (hp && atk && def_ && spa && spd && spe) {
+    stats = {hp: +hp, atk: +atk, def: +def_, spa: +spa, spd: +spd, spe: +spe};
+  }
+
+  const r = await api('calibrate', {pokemon, nature, gender, stats, search_range: range});
+  if (r.error) { alert(r.error); return; }
+
+  const matches = r.matches || [];
+  document.getElementById('cal-results-card').style.display = 'block';
+  const tbody = document.getElementById('cal-tbody');
+  tbody.innerHTML = '';
+
+  for (const m of matches) {
+    const iv = m.ivs;
+    const tr = document.createElement('tr');
+    tr.className = m.shiny ? 'shiny-row' : '';
+    const offsetStr = m.offset > 0 ? `+${m.offset}` : `${m.offset}`;
+    const offsetColor = m.offset === 0 ? 'var(--green)' : Math.abs(m.offset) <= 5 ? 'var(--orange)' : 'var(--red)';
+    tr.innerHTML = `
+      <td style="font-weight:700">${m.advance}</td>
+      <td style="font-weight:700;color:${offsetColor}">${offsetStr}</td>
+      <td>${m.nature}</td>
+      <td>${iv.hp}/${iv.atk}/${iv.def}/${iv.spa}/${iv.spd}/${iv.spe}</td>
+      <td style="font-size:0.85em">${m.stats.hp}/${m.stats.atk}/${m.stats.def}/${m.stats.spa}/${m.stats.spd}/${m.stats.spe}</td>
+      <td>${m.shiny ? '<span class="shiny-star">★</span>' : ''}</td>
+      <td><button class="btn-sm btn-primary" onclick="applyCalibration(${m.advance},${m.offset})">Apply</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  if (matches.length > 0) {
+    const best = matches[0];
+    const offMs = (best.offset / 2 / (16777216/280896) * 1000).toFixed(1);
+    document.getElementById('cal-summary').innerHTML =
+      `<strong>Best match:</strong> Advance ${best.advance} (offset ${best.offset > 0 ? '+' : ''}${best.offset} = ${offMs}ms)<br>` +
+      `<span style="color:var(--muted)">Click "Apply" on the correct row to adjust the timer automatically.</span>`;
+  }
+}
+
+async function applyCalibration(advance, offset) {
+  // Calculate ms offset: offset advances / 2 frames / framerate * 1000
+  const offsetMs = offset / 2 / (16777216/280896) * 1000;
+  const currentCal = parseFloat(document.getElementById('input-cal-offset').value) || 0;
+  const newCal = (currentCal - offsetMs).toFixed(1);
+  document.getElementById('input-cal-offset').value = newCal;
+  await saveCalibration();
+  addLog('timer-log', `Calibration applied: advance ${advance}, offset ${offset} (${offsetMs.toFixed(1)}ms), new cal = ${newCal}ms`);
+  alert(`Timer adjusted by ${(-offsetMs).toFixed(1)}ms. New calibration: ${newCal}ms`);
+}
+
+// ── Init ──
+loadStatus();
+setInterval(loadStatus, 5000);
+initNatureDropdown();
+</script>
+</body>
+</html>

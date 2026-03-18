@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Build artifacts
+*/pico-fw/build/
+
+# State files (runtime data)
+encounter_count.txt
+encounter_time.txt
+hunt_state.json
+hunt_state copy.json
+rng_bot_status.json
+rng_state.json
+rng_log.txt
+seed_data_cache.json
+pause_requested.flag
+
+# macOS
+.DS_Store
+._*
+
+# Images / debug screenshots
+*.png
+*.jpg
+
+# Firmware builds
+*.uf2
+*.dis
+*.elf
+*.hex
+*.bin
+*.map
+
+# IDE
+.vscode/
+1~
+*.log

@@ -1,0 +1,102 @@
+Blissey's Shiny Starter Tutorial - FireRed/LeafGreen Switch RNG Manipulation
+=============================================================================
+Source: YouTube tutorial transcript
+
+KEY TECHNICAL DETAILS EXTRACTED:
+================================
+
+PREREQUISITES:
+- Must have an existing save file (play through intro, save TWICE for backup save)
+- Text speed set to FAST in options
+- Sound: Mono, Button mode: Help, Hold button: None
+- Save in front of desired starter in Oak's Lab
+
+BOOT SEQUENCE:
+1. Launch game: A (select game) → A (profile select) → HOME immediately
+   - Must hit HOME BEFORE seeing any GBA game screen
+   - Even seeing the Switch logo is fine, but NOT the copyright screen
+   - Switch 2: can be very fast, it buffers
+   - Switch 1: sometimes too-early HOME cancels it, but as long as no game screen visible = fine
+2. Wait a few seconds on HOME screen (stabilizes seeds)
+3. Start Eon Timer at EXACT same time as pressing A to resume game from HOME
+
+THREE-STAGE TIMER (Triple frame-perfect):
+==========================================
+
+Phase 1 - SEED TIMING (milliseconds):
+- Timer counts down from seed's MS value
+- Watch the ENTIRE intro play out (do NOT mash through it!)
+- When Charizard title screen appears, wait for timer beep
+- HOLD A through the title screen (hold, don't just press)
+- Don't use any other button besides A
+
+Phase 2 - CONTINUE SCREEN (advances at 1x speed):
+- On the save file select screen (Continue / New Game)
+- RNG advances at 1x speed here (NOT 2x like overworld!)
+- Wait for timer 2 beep, then hit A to select Continue
+- This is the only screen where RNG goes 1-by-1
+
+Phase 3 - OVERWORLD/STARTER (frames at 2x speed):
+- After loading save, mash A/B to get to starter interaction
+- Navigate to "This Pokémon is quite energetic" screen
+- Wait there for timer 3 beep
+- Hit A when timer finishes
+- The RNG consumption moment is pressing A on "energetic" screen
+- NOT the Yes/No confirmation screen!
+- Default overworld frames: 600 (= ~1200 RNG advances at 2x)
+
+EONTTIMER SETUP:
+- Box 1: MS (seed milliseconds from 10 Lines)
+- Box 2: Advances (Continue screen frames from 10 Lines)  
+- Box 3: Advances = 600 (overworld frames)
+
+RNG SPEED NOTES:
+- FRLG always runs RNG at 2x (thinks wireless adapter plugged in)
+- EXCEPT on Continue screen where it's 1x
+- This means overworld advances = 2 per video frame
+
+CUSTOM vs PRESET RIVAL NAME:
+- Custom name → land on EVEN advances
+- Preset name (e.g. "Green") → land on ODD advances
+- User named rival custom in this save file
+
+TID/SID CALCULATION:
+- Convert TID (decimal) to hex → use as Initial Seed in Lincoln's tool
+- Target advances for TID: 1500 (everyone same)
+- English offset: +249 to target → multiply by 2
+- Example: (1500 + 249) × 2 = 3498
+- Search ±40 around that value for potential SIDs
+
+10 LINES TOOL SETUP:
+- Game: Switch FireRed (or LeafGreen Switch) English
+- Sound: Mono, Button mode: Help, Hold button: None  
+- Console: Switch or Switch 2
+- Target seed: pick one with seeds above and below (±20)
+- Min advances: 1000, Max: 5000
+- Overworld frames: 600
+- Input TID and potential SID
+- Method: Static 1, Category: Starters
+
+CALIBRATION AFTER EACH ATTEMPT:
+1. Input nature, gender, level 5 stats into 10 Lines
+2. Narrow advance range to ±100 around target
+3. Check which advance/seed you actually hit
+4. If off-advance: adjust Continue screen frames in Eon Timer
+5. If off-seed: adjust MS in Eon Timer
+6. Level up by fighting rival → level 6 stats narrow results
+7. If still ambiguous, level to 7 fighting wild Pokemon
+8. Track EVs: Pidgey/Rattata/Spearow = Speed, Mankey = Attack
+9. Max 3 of same EV Pokemon before stats change
+
+SID SEARCH STRATEGY:
+- Start at calculated advance (e.g., 3498)
+- If not shiny, move to next EVEN (if custom name) or ODD (if preset name)
+- Go down first (3500, 3502, 3504...) then back up (3496, 3494...)
+- Each new SID candidate: redo full setup in 10 Lines, pick new target
+- Rinse and repeat until shiny appears
+
+TIMING EXAMPLE FROM VIDEO:
+- Seed 84D4, MS ~2829889
+- Continue screen frames: 1161
+- Overworld frames: 600
+- Total advances: 2361 (= 1161 + 1200 from 600 overworld frames × 2)
