@@ -11,6 +11,7 @@ the bot is stopped, since the serial port is exclusive.
 import argparse
 import http.server
 import json
+import os
 import subprocess
 import time
 import signal
@@ -196,6 +197,7 @@ def start_bot():
     bot_process = subprocess.Popen(
         [str(VENV_PYTHON), str(BOT_SCRIPT)],
         cwd=str(BOT_SCRIPT.parent),
+        env={**os.environ},  # inherit current env (includes IMESSAGE_TO etc.)
     )
     return f"Bot started (PID {bot_process.pid})"
 
