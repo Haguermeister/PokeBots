@@ -68,7 +68,7 @@ HTML = """<!DOCTYPE html>
     <div class="btn-grid">
       <button class="btn-a" onclick="press('A')">A</button>
       <button class="btn-b" onclick="press('B')">B</button>
-      <button class="btn-x" onclick="press('X')">X</button>
+      <button class="btn-x" onclick="press('Y')">X</button>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto">
       <div></div>
@@ -204,7 +204,7 @@ def queue_check_starter_sequence():
         ("press B 120", 0.22),
         ("press B 120", 0.22),
         ("press B 120", 0.30),
-        ("press X 120", 1.50),
+        ("press Y 120", 1.50),  # Y in firmware = Switch X = GBA Start
         ("press A 120", 0.40),
         ("press A 120", 0.40),
         ("press A 120", 0.40),

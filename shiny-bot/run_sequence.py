@@ -53,7 +53,7 @@ def run():
     time.sleep(2.3)
 
     # Open menu + navigate to summary
-    press("X", 1.2)
+    press("Y", 1.2)  # Y in firmware = Switch X = GBA Start (HID bits swapped)
     repeat_press("A", 0.3, 7)
     time.sleep(0.5)
 
