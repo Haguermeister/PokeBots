@@ -9,6 +9,7 @@ Automated shiny hunting and RNG manipulation bots for **Pokemon FireRed/LeafGree
 | **[shiny-bot](shiny-bot/)** | Brute-force shiny starter hunting via soft resets | Wi-Fi (HTTP) | `http://localhost:8000` |
 | **[uart-bot](uart-bot/)** | Same shiny hunt loop, wired via UART/serial | USB-TTL serial | `http://localhost:8000` |
 | **[rng-bot](rng-bot/)** | RNG manipulation for frame-perfect shiny starters | Wi-Fi (HTTP) | `http://localhost:5001` |
+| **[sid-finder](sid-finder/)** | Find your Secret ID from a random shiny | — | `http://localhost:5002` |
 
 ## How It Works
 
@@ -71,27 +72,40 @@ python3 hunt_loop.py
 PokeBots/
 ├── README.md
 ├── .gitignore
-├── shiny-bot/          # Wi-Fi shiny hunter
-│   ├── hunt_loop.py    # Main automation loop
-│   ├── run_sequence.py # Button sequence for one attempt
-│   ├── check_border.py # Shiny detection via pixel sampling
-│   ├── web_control.py  # Web UI server
-│   ├── pico.py         # Pico HTTP communication
-│   └── pico-fw/        # Pico W Wi-Fi firmware (C)
-├── uart-bot/           # Wired (UART) shiny hunter
-│   ├── hunt_loop.py    # Main automation loop
-│   ├── run_sequence.py # Button sequence for one attempt
-│   ├── check_border.py # Shiny detection via pixel sampling
-│   ├── web_control.py  # Web UI server
-│   ├── pico.py         # Pico serial communication
-│   └── pico-fw/        # Pico W UART firmware (C)
-└── rng-bot/            # RNG manipulation bot
-    ├── rng_bot.py      # Main 3-phase timer loop
-    ├── rng_engine.py   # Gen 3 LCRNG implementation
-    ├── web_control.py  # Seed browser + timer UI
-    ├── screen_reader.py# Nature/shiny detection
-    ├── pico.py         # Pico HTTP communication
-    └── index.html      # Rich web frontend
+├── notify.py               # → shared/notify.py (symlink)
+├── shared/                 # Common modules (single source of truth)
+│   ├── check_border.py     # Shiny detection via pixel sampling
+│   ├── pixel_tools.py      # Live pixel coordinate probing
+│   └── notify.py           # iMessage/macOS/ntfy/Discord notifications
+├── shiny-bot/              # Wi-Fi shiny hunter
+│   ├── hunt_loop.py        # Main automation loop
+│   ├── run_sequence.py     # Button sequence for one attempt
+│   ├── check_border.py     # → shared/check_border.py (symlink)
+│   ├── pixel_tools.py      # → shared/pixel_tools.py (symlink)
+│   ├── web_control.py      # Web UI server
+│   ├── pico.py             # Pico HTTP communication
+│   └── pico-fw/            # Pico W Wi-Fi firmware (C)
+├── uart-bot/               # Wired (UART) shiny hunter
+│   ├── hunt_loop.py        # Main automation loop
+│   ├── run_sequence.py     # Button sequence for one attempt
+│   ├── check_border.py     # → shared/check_border.py (symlink)
+│   ├── pixel_tools.py      # → shared/pixel_tools.py (symlink)
+│   ├── web_control.py      # Web UI server
+│   ├── pico.py             # Pico serial communication
+│   └── pico-fw/            # Pico W UART firmware (C)
+├── rng-bot/                # RNG manipulation bot
+│   ├── rng_bot.py          # Main 3-phase timer loop
+│   ├── rng_engine.py       # Gen 3 LCRNG + PID reverse search
+│   ├── pokemon_data.py     # Base stats, generation triggers
+│   ├── web_control.py      # Seed browser + timer UI
+│   ├── screen_reader.py    # Nature/shiny detection
+│   ├── pico.py             # Pico HTTP communication
+│   └── index.html          # Rich web frontend
+└── sid-finder/             # SID from random shiny tool
+    ├── sid_finder.py       # Web server + API
+    ├── rng_math.py         # Re-exports from rng-bot/rng_engine.py
+    ├── pokemon_data.py     # Stat calc + EV tracker data
+    └── index.html          # 4-step SID finder UI
 ```
 
 ## Acknowledgments
