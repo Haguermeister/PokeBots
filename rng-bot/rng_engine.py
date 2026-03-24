@@ -322,3 +322,64 @@ def generate_range(
             results.append(pkmn)
         seed = advance(seed)
     return results
+
+
+# ── PID Reverse Search (for SID finding from random shiny) ───────────────
+
+def find_pids_from_ivs(ivs: dict) -> list[dict]:
+    """Find all Method 1 PIDs that produce the given exact IVs.
+
+    IVs only use bits 0-14 of the upper 16 bits. Bit 15 is unused,
+    so we try both 0 and 1 for that bit (4 IV word combinations).
+    """
+    iv1_base = (ivs["def"] << 10) | (ivs["atk"] << 5) | ivs["hp"]
+    iv2_base = (ivs["spd"] << 10) | (ivs["spa"] << 5) | ivs["spe"]
+
+    iv1_variants = [iv1_base, iv1_base | 0x8000]
+    iv2_variants = [iv2_base, iv2_base | 0x8000]
+
+    results = []
+    for iv1_upper in iv1_variants:
+        for iv2_upper in iv2_variants:
+            for low16 in range(0x10000):
+                seed3 = (iv1_upper << 16) | low16
+                seed4 = (seed3 * MULT + ADD) & MASK
+                if high16(seed4) != iv2_upper:
+                    continue
+
+                seed2 = reverse(seed3)
+                seed1 = reverse(seed2)
+                pid_high = high16(seed2)
+                pid_low = high16(seed1)
+                pid = (pid_high << 16) | pid_low
+
+                results.append({
+                    "pid": pid,
+                    "pid_hex": f"{pid:08X}",
+                    "nature": NATURES[pid % 25],
+                    "nature_id": pid % 25,
+                    "ability": pid & 1,
+                    "gender_value": pid & 0xFF,
+                })
+    return results
+
+
+def find_sid_from_shiny(tid: int, pid: int) -> list[int]:
+    """Find all 8 possible SIDs given TID and a shiny PID."""
+    pid_high = (pid >> 16) & 0xFFFF
+    pid_low = pid & 0xFFFF
+    base = tid ^ pid_high ^ pid_low
+    return [base ^ sv for sv in range(8)]
+
+
+def find_sid_from_shiny_pokemon(tid: int, ivs: dict, nature_name: str) -> list[dict]:
+    """Full pipeline: IVs + nature → PID candidates → filter → SID candidates."""
+    pid_candidates = find_pids_from_ivs(ivs)
+    nature_idx = NATURES.index(nature_name) if nature_name in NATURES else -1
+    matching = [p for p in pid_candidates if p["nature_id"] == nature_idx]
+
+    results = []
+    for p in matching:
+        sids = find_sid_from_shiny(tid, p["pid"])
+        results.append({**p, "sids": sids})
+    return results
