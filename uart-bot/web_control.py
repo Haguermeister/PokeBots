@@ -82,10 +82,8 @@ HTML = """<!DOCTYPE html>
       <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DD')\">&#9660;</button>
       <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DR')\">&#9654;</button>
     </div>
-    <div style=\"display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px\">
-      <button style=\"background:#8e44ad;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('START')\">Start (+)</button>
+    <div style=\"display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto\">
       <button style=\"background:#2d98da;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('HOME')\">Home</button>
-      <button style=\"background:#27ae60;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('L')\">L</button>
     </div>  </div>
 
   <div class="section">
