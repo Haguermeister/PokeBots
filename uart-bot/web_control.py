@@ -61,7 +61,7 @@ HTML = """<!DOCTYPE html>
   .btn-b { background: #e8374a; color: #fff; }
   .btn-x { background: #4aa8d8; color: #0a2a3d; }
   .btn-home { background: #3a7bd5; color: #fff; }
-  .btn-dpad { background: #3a3f4a; color: #ccc; font-size: 1.2em; padding: 14px; border-radius: 10px; }
+  .btn-dpad { background: #3a3f4a; color: #ccc; font-size: 1.4em; padding: 18px; border-radius: 10px; }
   .btn-start { background: #2ecc71; color: #111; }
   .btn-stop { background: #c0392b; color: #fff; }
   .btn-restart { background: #e67e22; color: #111; }
@@ -95,7 +95,7 @@ HTML = """<!DOCTYPE html>
       <button class="btn-home" onclick="press('HOME')">Home</button>
       <button class="btn-x" onclick="press('Y')">X</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:200px;margin:4px auto">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:240px;margin:4px auto">
       <div></div>
       <button class="btn-dpad" onclick="press('DU')">&#9650;</button>
       <div></div>
