@@ -73,8 +73,19 @@ HTML = """<!DOCTYPE html>
       <button class="btn-a" onclick="press('A')">A</button>
       <button class="btn-b" onclick="press('B')">B</button>
       <button class="btn-x" onclick="press('Y')">X</button>
+    </div>    <div style=\"display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto\">
+      <div></div>
+      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DU')\">&#9650;</button>
+      <div></div>
+      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DL')\">&#9664;</button>
+      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DD')\">&#9660;</button>
+      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DR')\">&#9654;</button>
     </div>
-  </div>
+    <div style=\"display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px\">
+      <button style=\"background:#8e44ad;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('START')\">Start (+)</button>
+      <button style=\"background:#2d98da;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('HOME')\">Home</button>
+      <button style=\"background:#27ae60;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('L')\">L</button>
+    </div>  </div>
 
   <div class="section">
     <h2>Bot Control</h2>
@@ -92,6 +103,9 @@ HTML = """<!DOCTYPE html>
     </div>
     <div class="btn-row" style="margin-top:10px; grid-template-columns: 1fr;">
       <button class="btn-save" onclick="press('SAVE_GAME')">Save Shiny</button>
+    </div>
+    <div class="btn-row" style="margin-top:10px; grid-template-columns: 1fr;">
+      <button style="background:#e74c3c;color:#fff;padding:14px;border:none;border-radius:10px;font-size:1em;cursor:pointer" onclick="resetCounters()">Reset Counter &amp; Timer</button>
     </div>
   </div>
 
@@ -124,6 +138,15 @@ HTML = """<!DOCTYPE html>
       const data = await res.json();
       addLog(data.msg);
       checkStatus();
+    } catch(e) { addLog('Error: ' + e); }
+  }
+
+  async function resetCounters() {
+    if (!confirm('Reset encounter counter, timer, and hunt state to 0?')) return;
+    try {
+      const res = await fetch('/reset_counters', { method: 'POST' });
+      const data = await res.json();
+      addLog(data.msg);
     } catch(e) { addLog('Error: ' + e); }
   }
 
@@ -200,6 +223,22 @@ def start_bot():
         env={**os.environ},  # inherit current env (includes IMESSAGE_TO etc.)
     )
     return f"Bot started (PID {bot_process.pid})"
+
+
+def reset_counters():
+    """Reset encounter count, timer, and hunt state to 0."""
+    enc_file = BASE_DIR / "encounter_count.txt"
+    time_file = BASE_DIR / "encounter_time.txt"
+    state_file = BASE_DIR / "hunt_state.json"
+
+    enc_file.write_text("Soft Resets: 0", encoding="utf-8")
+    time_file.write_text("00:00:00", encoding="utf-8")
+    state_file.write_text(json.dumps({
+        "attempt": 0,
+        "total_runtime_seconds": 0,
+        "recovery_attempts": 0,
+    }), encoding="utf-8")
+    return "Counter, timer, and hunt state reset to 0"
 
 
 def request_pause():
@@ -279,6 +318,13 @@ class Handler(http.server.BaseHTTPRequestHandler):
           elif btn == 'SAVE_GAME':
             result = queue_save_sequence()
             self._send_json({'msg': result})
+          elif btn in ('DU', 'DD', 'DL', 'DR'):
+            dpad_map = {'DU': 'UP', 'DD': 'DOWN', 'DL': 'LEFT', 'DR': 'RIGHT'}
+            result = pico.send_cmd(f'dpad {dpad_map[btn]} 120')
+            self._send_json({'msg': f'D-pad {dpad_map[btn]}: {result}'})
+          elif btn == 'START':
+            result = pico.send_cmd('press + 120')
+            self._send_json({'msg': f'Start (+): {result}'})
           else:
             result = pico.send_cmd(f'press {btn} 120')
             self._send_json({'msg': f'Pressed {btn}: {result}'})
@@ -298,6 +344,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 self._send_json({'msg': clear_pause()})
             else:
                 self._send_json({'msg': 'Unknown action'}, 400)
+
+        elif self.path == '/reset_counters':
+            self._send_json({'msg': reset_counters()})
+
         else:
             self.send_error(404)
 
