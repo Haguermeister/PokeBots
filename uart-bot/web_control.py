@@ -70,15 +70,15 @@ HTML = """<!DOCTYPE html>
 
   <div class="section">
     <h2>Buttons</h2>
-    <div class="btn-grid">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:260px;margin:0 auto">
       <button class="btn-a" onclick="press('A')">A</button>
       <button class="btn-b" onclick="press('B')">B</button>
     </div>
-    <div class="btn-grid" style="margin-top:8px">
-      <button style="background:#2d98da;color:#fff;padding:18px;border:none;border-radius:10px;font-size:1em;cursor:pointer" onclick="press('HOME')">Home</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:260px;margin:8px auto 0">
+      <button style="background:#2d98da;color:#fff;padding:18px;border:none;border-radius:12px;font-size:1.2em;font-weight:bold;cursor:pointer" onclick="press('HOME')">Home</button>
       <button class="btn-x" onclick="press('Y')">X</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:200px;margin:12px auto 0">
       <div></div>
       <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DU')">&#9650;</button>
       <div></div>
