@@ -34,27 +34,34 @@ HTML = """<!DOCTYPE html>
 <title>Shiny Bot Control</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; overflow: hidden; }
-  body { font-family: -apple-system, sans-serif; background: radial-gradient(circle at top, #1f2430 0%, #11151d 45%, #0b0e14 100%); color: #f8f8f8; display: flex; justify-content: center; align-items: flex-start; padding: 12px; }
-  .container { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 14px; background: rgba(20, 24, 31, 0.93); border: 2px solid #2d3138; border-radius: 16px; padding: 14px; box-shadow: 0 10px 24px rgba(0,0,0,0.35); }
-  h1 { text-align: center; font-size: 1.3em; letter-spacing: 0.03em; }
-  .status { text-align: center; padding: 10px; border-radius: 10px; font-weight: bold; font-size: 0.95em; border: 1px solid rgba(255,255,255,0.12); }
-  .status.running { background: #1f8f62; }
-  .status.stopped { background: #b33a3a; }
-  .section h2 { font-size: 0.8em; margin-bottom: 8px; color: #c2c7cf; text-transform: uppercase; letter-spacing: 1px; }
-  .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  html, body { height: 100%; }
+  body { font-family: -apple-system, sans-serif; background: #0b0e14; color: #f8f8f8; display: flex; justify-content: center; padding: 12px; }
+  .container { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 0; }
+  h1 { text-align: center; font-size: 1.2em; padding: 10px 0; }
+  .status { text-align: center; padding: 8px; border-radius: 10px; font-weight: 600; font-size: 0.9em; margin-bottom: 10px; }
+  .status.running { background: #1a3d2a; border: 1px solid #2ecc71; color: #2ecc71; }
+  .status.stopped { background: #3d1a1a; border: 1px solid #c0392b; color: #e74c3c; }
+  /* Tabs */
+  .tabs { display: flex; gap: 0; margin-bottom: 12px; background: #14181f; border-radius: 10px; border: 1px solid #2d3138; overflow: hidden; }
+  .tab { flex: 1; padding: 10px; text-align: center; font-weight: 600; font-size: 0.85em; cursor: pointer; color: #8b949e; border: none; background: none; border-radius: 0; }
+  .tab.active { background: #3a7bd5; color: #fff; }
+  .tab:not(.active):active { background: rgba(255,255,255,0.05); }
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: flex; flex-direction: column; gap: 12px; }
+  /* Buttons */
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   button {
-    padding: 20px 10px; border: none; border-radius: 12px; font-size: 1.2em;
-    font-weight: bold; cursor: pointer; transition: transform 0.08s, opacity 0.08s;
+    padding: 16px 8px; border: none; border-radius: 12px; font-size: 1.1em;
+    font-weight: 700; cursor: pointer; transition: transform 0.06s;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
-  button:active { transform: scale(0.93); opacity: 0.7; }
-  /* Switch controller colors */
+  button:active { transform: scale(0.93); opacity: 0.8; }
   .btn-a { background: #48c855; color: #111; }
   .btn-b { background: #e8374a; color: #fff; }
   .btn-x { background: #4aa8d8; color: #0a2a3d; }
-  /* Bot control */
+  .btn-home { background: #3a7bd5; color: #fff; }
+  .btn-dpad { background: #3a3f4a; color: #ccc; font-size: 1.2em; padding: 14px; border-radius: 10px; }
   .btn-start { background: #2ecc71; color: #111; }
   .btn-stop { background: #c0392b; color: #fff; }
   .btn-restart { background: #e67e22; color: #111; }
@@ -62,28 +69,33 @@ HTML = """<!DOCTYPE html>
   .btn-resume { background: #3498db; color: #fff; }
   .btn-check { background: #606d7d; color: #fff; }
   .btn-save { background: #f0c730; color: #111; }
-  .btn-reset { background: #95524c; color: #fff; }
-  .btn-home { background: #3a7bd5; color: #fff; }
-  .btn-dpad { background: #505a66; color: #fff; font-size: 1.1em; }
-  .log { background: #0d1117; border-radius: 10px; padding: 10px; font-family: monospace; font-size: 0.8em; height: 120px; overflow-y: auto; white-space: pre-wrap; -webkit-overflow-scrolling: touch; border: 1px solid #2d3138; }
+  .btn-reset { background: #6b3a3a; color: #ddd; }
+  .log { background: #0d1117; border-radius: 10px; padding: 10px; font-family: 'SF Mono', monospace; font-size: 0.75em; height: 140px; overflow-y: auto; white-space: pre-wrap; -webkit-overflow-scrolling: touch; border: 1px solid #2d3138; color: #8b949e; }
+  .section-label { font-size: 0.75em; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
 </style>
 </head>
 <body>
 <div class="container">
-  <h1>Shiny Bot Control</h1>
+  <h1>&#127918; Shiny Bot</h1>
   <div class="status" id="status">Checking...</div>
 
-  <div class="section">
-    <h2>Buttons</h2>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('controller')">Controller</div>
+    <div class="tab" onclick="switchTab('bot')">Bot</div>
+    <div class="tab" onclick="switchTab('log')">Log</div>
+  </div>
+
+  <!-- CONTROLLER TAB -->
+  <div class="panel active" id="panel-controller">
     <div class="btn-row">
       <button class="btn-a" onclick="press('A')">A</button>
       <button class="btn-b" onclick="press('B')">B</button>
     </div>
-    <div class="btn-row" style="margin-top:10px">
+    <div class="btn-row">
       <button class="btn-home" onclick="press('HOME')">Home</button>
       <button class="btn-x" onclick="press('Y')">X</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:220px;margin:12px auto 0">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:200px;margin:4px auto">
       <div></div>
       <button class="btn-dpad" onclick="press('DU')">&#9650;</button>
       <div></div>
@@ -93,36 +105,39 @@ HTML = """<!DOCTYPE html>
     </div>
   </div>
 
-  <div class="section">
-    <h2>Bot Control</h2>
+  <!-- BOT TAB -->
+  <div class="panel" id="panel-bot">
     <div class="btn-row">
-      <button class="btn-start" onclick="botAction('start')">Start</button>
-      <button class="btn-stop" onclick="botAction('stop')">Stop</button>
+      <button class="btn-start" onclick="botAction('start')">&#9654; Start</button>
+      <button class="btn-stop" onclick="botAction('stop')">&#9724; Stop</button>
     </div>
-    <div class="btn-row" style="margin-top:10px">
-      <button class="btn-restart" onclick="botAction('restart')">Restart</button>
-      <button class="btn-check" onclick="press('CHECK_STARTER')">Check Starter</button>
+    <div class="btn-row">
+      <button class="btn-restart" onclick="botAction('restart')">&#8635; Restart</button>
+      <button class="btn-check" onclick="press('CHECK_STARTER')">&#128270; Check</button>
     </div>
-    <div class="btn-row" style="margin-top:10px">
-      <button class="btn-pause" onclick="botAction('pause')">Pause After Check</button>
-      <button class="btn-resume" onclick="botAction('resume')">Resume</button>
+    <div class="btn-row">
+      <button class="btn-pause" onclick="botAction('pause')">&#10074;&#10074; Pause</button>
+      <button class="btn-resume" onclick="botAction('resume')">&#9654; Resume</button>
     </div>
-    <div class="btn-row" style="margin-top:10px; grid-template-columns: 1fr;">
-      <button class="btn-save" onclick="press('SAVE_GAME')">Save Shiny</button>
-    </div>
-    <div class="btn-row" style="margin-top:10px; grid-template-columns: 1fr;">
-      <button class="btn-reset" onclick="resetCounters()">Reset Counter &amp; Timer</button>
-    </div>
+    <button class="btn-save" onclick="press('SAVE_GAME')" style="width:100%">&#11088; Save Shiny</button>
+    <button class="btn-reset" onclick="resetCounters()" style="width:100%">Reset Counter &amp; Timer</button>
   </div>
 
-  <div class="section">
-    <h2>Log</h2>
+  <!-- LOG TAB -->
+  <div class="panel" id="panel-log">
     <div class="log" id="log"></div>
   </div>
 </div>
 <script>
   const log = document.getElementById('log');
   const status = document.getElementById('status');
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelector('.tab[onclick*=\"' + name + '\"]').classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
 
   function addLog(msg) {
     const time = new Date().toLocaleTimeString();
