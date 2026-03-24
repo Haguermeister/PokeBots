@@ -73,18 +73,20 @@ HTML = """<!DOCTYPE html>
     <div class="btn-grid">
       <button class="btn-a" onclick="press('A')">A</button>
       <button class="btn-b" onclick="press('B')">B</button>
-      <button class="btn-x" onclick="press('Y')">X</button>
-    </div>    <div style=\"display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto\">
-      <div></div>
-      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DU')\">&#9650;</button>
-      <div></div>
-      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DL')\">&#9664;</button>
-      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DD')\">&#9660;</button>
-      <button style=\"background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer\" onclick=\"press('DR')\">&#9654;</button>
     </div>
-    <div style=\"display:grid;grid-template-columns:1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto\">
-      <button style=\"background:#2d98da;color:#fff;padding:12px;border:none;border-radius:8px;cursor:pointer\" onclick=\"press('HOME')\">Home</button>
-    </div>  </div>
+    <div class="btn-grid" style="margin-top:8px">
+      <button style="background:#2d98da;color:#fff;padding:18px;border:none;border-radius:10px;font-size:1em;cursor:pointer" onclick="press('HOME')">Home</button>
+      <button class="btn-x" onclick="press('Y')">X</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;max-width:200px;margin-left:auto;margin-right:auto">
+      <div></div>
+      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DU')">&#9650;</button>
+      <div></div>
+      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DL')">&#9664;</button>
+      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DD')">&#9660;</button>
+      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DR')">&#9654;</button>
+    </div>
+  </div>
 
   <div class="section">
     <h2>Bot Control</h2>
