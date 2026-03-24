@@ -11,6 +11,9 @@ from pathlib import Path
 import pico
 import run_sequence
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+import notify
+
 BASE_DIR = Path(__file__).resolve().parent
 STAR_SCRIPT = BASE_DIR / "check_border.py"
 STATE_FILE = BASE_DIR / "hunt_state.json"
@@ -290,7 +293,8 @@ def main():
 
             if detect_rc == 0:
                 save_state(attempt, total_runtime, recovery_attempts=recovery_count)
-                print("\n✨ SHINY DETECTED — STOPPING BOT ✨")
+                runtime_str = f"{total_runtime//3600}:{(total_runtime%3600)//60:02d}:{total_runtime%60:02d}"
+                notify.shiny_found("Starter", resets=attempt, runtime=runtime_str)
                 print("Save it manually on the Switch.")
                 print(f"Saved attempt count: {attempt}")
                 break
