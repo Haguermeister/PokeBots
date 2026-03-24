@@ -1,18 +1,21 @@
-"""Shiny notification module — alerts when a shiny is detected.
+"""Notification module for PokeBots — alerts on shiny, start, stop.
 
 Supports multiple notification methods:
-  - ntfy.sh: Free push notifications to your phone (no account needed)
+  - iMessage: Text yourself via macOS Messages app (IMESSAGE_TO env var)
   - macOS: Native notification center + sound
+  - ntfy.sh: Free push notifications to your phone (no account needed)
   - Discord: Webhook message to a channel
 
 Setup:
-  ntfy:    Set NTFY_TOPIC env var (e.g. "pokebots-austin")
-           Install ntfy app on phone, subscribe to same topic
-  Discord: Set DISCORD_WEBHOOK env var to your webhook URL
-  macOS:   Always enabled (sound + notification center)
+  iMessage: export IMESSAGE_TO="+18041234567"
+  ntfy:     export NTFY_TOPIC="pokebots-austin"
+  Discord:  export DISCORD_WEBHOOK="https://discord.com/api/webhooks/..."
+  macOS:    Always enabled (sound + notification center)
 
 Usage:
   import notify
+  notify.bot_started("shiny-bot")
+  notify.bot_stopped("shiny-bot", resets=500, runtime="5:30:00")
   notify.shiny_found("Bulbasaur", resets=5312, runtime="68:27:31")
 """
 
@@ -29,7 +32,7 @@ IMESSAGE_TO = os.environ.get("IMESSAGE_TO", "")  # set via: export IMESSAGE_TO="
 
 def shiny_found(pokemon="Pokemon", resets=0, runtime=""):
     """Send notifications that a shiny was found."""
-    title = f"Shiny {pokemon} Found!"
+    title = f"✨ Shiny {pokemon} Found!"
     body = f"After {resets} resets ({runtime})"
     print(f"\n{'='*50}")
     print(f"  {title}")
@@ -37,9 +40,25 @@ def shiny_found(pokemon="Pokemon", resets=0, runtime=""):
     print(f"{'='*50}\n")
 
     _notify_macos(title, body)
-    _notify_imessage(title, body)
+    _send_imessage(f"{title}\n{body}")
     _notify_ntfy(title, body)
     _notify_discord(title, body, pokemon, resets, runtime)
+
+
+def bot_started(bot_name="bot"):
+    """Notify that a bot run has started."""
+    title = f"🟢 {bot_name} started"
+    body = f"Shiny hunting is now running."
+    print(f"[notify] {title}")
+    _send_imessage(f"{title}\n{body}")
+
+
+def bot_stopped(bot_name="bot", resets=0, runtime=""):
+    """Notify that a bot run has stopped."""
+    title = f"🔴 {bot_name} stopped"
+    body = f"Resets: {resets} | Runtime: {runtime}" if resets else "Bot stopped."
+    print(f"[notify] {title} — {body}")
+    _send_imessage(f"{title}\n{body}")
 
 
 def _notify_macos(title, body):
@@ -66,16 +85,17 @@ def _notify_macos(title, body):
         print(f"macOS notification failed: {e}")
 
 
-def _notify_imessage(title, body):
+def _send_imessage(message):
     """Send an iMessage to yourself via macOS Messages app."""
     if not IMESSAGE_TO:
         return
-    message = f"{title}\n{body}"
+    # Escape quotes in message for AppleScript
+    safe_msg = message.replace('"', '\\"')
     script = f'''
     tell application "Messages"
         set targetService to 1st account whose service type = iMessage
         set targetBuddy to participant "{IMESSAGE_TO}" of targetService
-        send "{message}" to targetBuddy
+        send "{safe_msg}" to targetBuddy
     end tell
     '''
     try:

@@ -238,6 +238,7 @@ def main():
     print(f"Loaded total runtime: {format_hms(previous_runtime)}")
     print(f"Recovery attempts: {recovery_count}")
     print(f"Starting at attempt #{attempt}")
+    notify.bot_started("uart-bot")
 
     timer_thread = threading.Thread(
         target=time_updater,
@@ -325,6 +326,9 @@ def main():
 
         save_state(last_saved, total_runtime, recovery_attempts=recovery_count)
         pico.close()
+
+        runtime_str = format_hms(total_runtime)
+        notify.bot_stopped("uart-bot", resets=last_saved, runtime=runtime_str)
 
         print("\nBot stopped.")
         print(f"Last saved attempt: {last_saved}")

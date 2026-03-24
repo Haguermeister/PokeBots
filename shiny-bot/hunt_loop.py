@@ -237,6 +237,7 @@ def main():
     print(f"Loaded total runtime: {format_hms(previous_runtime)}")
     print(f"Recovery attempts: {recovery_count}")
     print(f"Starting at attempt #{attempt}")
+    notify.bot_started("shiny-bot")
 
     timer_thread = threading.Thread(
         target=time_updater,
@@ -323,6 +324,9 @@ def main():
         last_saved = load_state()["attempt"]
 
         save_state(last_saved, total_runtime, recovery_attempts=recovery_count)
+
+        runtime_str = format_hms(total_runtime)
+        notify.bot_stopped("shiny-bot", resets=last_saved, runtime=runtime_str)
 
         print("\nBot stopped.")
         print(f"Last saved attempt: {last_saved}")
