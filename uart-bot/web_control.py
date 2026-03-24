@@ -23,6 +23,7 @@ PORT = 8000
 BOT_SCRIPT = Path(__file__).resolve().parent / "hunt_loop.py"
 VENV_PYTHON = Path(__file__).resolve().parent / "venv" / "bin" / "python3"
 PAUSE_FILE = Path(__file__).resolve().parent / "pause_requested.flag"
+BASE_DIR = Path(__file__).resolve().parent
 
 bot_process = None
 
