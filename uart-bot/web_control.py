@@ -43,23 +43,28 @@ HTML = """<!DOCTYPE html>
   .status.stopped { background: #b33a3a; }
   .section h2 { font-size: 0.8em; margin-bottom: 8px; color: #c2c7cf; text-transform: uppercase; letter-spacing: 1px; }
   .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
   button {
     padding: 20px 10px; border: none; border-radius: 12px; font-size: 1.2em;
     font-weight: bold; cursor: pointer; transition: transform 0.08s, opacity 0.08s;
     -webkit-tap-highlight-color: transparent; touch-action: manipulation;
   }
   button:active { transform: scale(0.93); opacity: 0.7; }
-  .btn-a { background: #5ecf62; color: #111; }
-  .btn-b { background: #e60012; color: #fff; }
-  .btn-x { background: #00b8f0; color: #07253a; }
-  .btn-start { background: #1f8f62; color: #fff; }
-  .btn-stop { background: #b33a3a; color: #fff; }
-  .btn-restart { background: #f57c00; color: #1f1f1f; }
-  .btn-pause { background: #8e44ad; color: #fff; }
-  .btn-resume { background: #2d98da; color: #fff; }
-  .btn-check { background: #5f6b7a; color: #fff; }
-  .btn-save { background: #f1c40f; color: #1f1f1f; }
+  /* Switch controller colors */
+  .btn-a { background: #48c855; color: #111; }
+  .btn-b { background: #e8374a; color: #fff; }
+  .btn-x { background: #4aa8d8; color: #0a2a3d; }
+  /* Bot control */
+  .btn-start { background: #2ecc71; color: #111; }
+  .btn-stop { background: #c0392b; color: #fff; }
+  .btn-restart { background: #e67e22; color: #111; }
+  .btn-pause { background: #7c52a5; color: #fff; }
+  .btn-resume { background: #3498db; color: #fff; }
+  .btn-check { background: #606d7d; color: #fff; }
+  .btn-save { background: #f0c730; color: #111; }
+  .btn-reset { background: #95524c; color: #fff; }
+  .btn-home { background: #3a7bd5; color: #fff; }
+  .btn-dpad { background: #505a66; color: #fff; font-size: 1.1em; }
   .log { background: #0d1117; border-radius: 10px; padding: 10px; font-family: monospace; font-size: 0.8em; height: 120px; overflow-y: auto; white-space: pre-wrap; -webkit-overflow-scrolling: touch; border: 1px solid #2d3138; }
 </style>
 </head>
@@ -70,21 +75,21 @@ HTML = """<!DOCTYPE html>
 
   <div class="section">
     <h2>Buttons</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:260px;margin:0 auto">
+    <div class="btn-row">
       <button class="btn-a" onclick="press('A')">A</button>
       <button class="btn-b" onclick="press('B')">B</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:260px;margin:8px auto 0">
-      <button style="background:#2d98da;color:#fff;padding:18px;border:none;border-radius:12px;font-size:1.2em;font-weight:bold;cursor:pointer" onclick="press('HOME')">Home</button>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn-home" onclick="press('HOME')">Home</button>
       <button class="btn-x" onclick="press('Y')">X</button>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:200px;margin:12px auto 0">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;max-width:220px;margin:12px auto 0">
       <div></div>
-      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DU')">&#9650;</button>
+      <button class="btn-dpad" onclick="press('DU')">&#9650;</button>
       <div></div>
-      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DL')">&#9664;</button>
-      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DD')">&#9660;</button>
-      <button style="background:#5f6b7a;color:#fff;padding:14px;border:none;border-radius:8px;font-size:1.1em;cursor:pointer" onclick="press('DR')">&#9654;</button>
+      <button class="btn-dpad" onclick="press('DL')">&#9664;</button>
+      <button class="btn-dpad" onclick="press('DD')">&#9660;</button>
+      <button class="btn-dpad" onclick="press('DR')">&#9654;</button>
     </div>
   </div>
 
@@ -106,7 +111,7 @@ HTML = """<!DOCTYPE html>
       <button class="btn-save" onclick="press('SAVE_GAME')">Save Shiny</button>
     </div>
     <div class="btn-row" style="margin-top:10px; grid-template-columns: 1fr;">
-      <button style="background:#e74c3c;color:#fff;padding:14px;border:none;border-radius:10px;font-size:1em;cursor:pointer" onclick="resetCounters()">Reset Counter &amp; Timer</button>
+      <button class="btn-reset" onclick="resetCounters()">Reset Counter &amp; Timer</button>
     </div>
   </div>
 
